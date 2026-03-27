@@ -111,7 +111,8 @@
 </div>
 
 <script>
-    let state = JSON.parse(localStorage.getItem('llama_v_final_all'));
+    // Загрузка состояния
+    let state = JSON.parse(localStorage.getItem('llama_v_final_all')) || { score: 0 };
     
     // Инициализация корпоративных данных, если их нет
     if(!state.corp) {
@@ -128,7 +129,7 @@
     const industries = [
         { id: 'tech', n: 'IT-GIANT', i: '💻', riskBase: 5, mult: 2, desc: 'Stable growth, low risk' },
         { id: 'fashion', n: 'CLOTHES BRAND', i: '👕', riskBase: 15, mult: 5, desc: 'High profit, lots of hype' },
-        { id: 'space', n: 'COSMOS', i: '🚀', riskBase: 30, mult: 15, desc: 'Crazy money, huge risk }
+        { id: 'space', n: 'COSMOS', i: '🚀', riskBase: 30, mult: 15, desc: 'Crazy money, huge risk' } 
     ];
 
     const officeStages = [
@@ -162,7 +163,7 @@
 
     function upgradeDept(type) {
         let currentLvl = state.corp.lvl[type];
-        let cost = 1e12 * Math.pow(10, currentLvl); // Очень дорого
+        let cost = 1e12 * Math.pow(10, currentLvl); 
         
         if(state.score >= cost) {
             state.score -= cost;
@@ -192,27 +193,25 @@
     }
 
     function updateUI() {
+        if(!state.corp) return;
         document.getElementById('corp-balance').innerText = Math.floor(state.score).toLocaleString();
         document.getElementById('corp-income').innerText = "+" + Math.floor(calcIncome()).toLocaleString();
         
-        // Обновление уровней
         for(let key in state.corp.lvl) {
             document.getElementById('lvl-' + key).innerText = 'Lv.' + state.corp.lvl[key];
             document.getElementById('fill-' + key).style.width = (state.corp.lvl[key] * 10) + '%';
         }
 
-        // Визуал офиса
         let stage = officeStages.find(s => s.lvl === state.corp.office);
         document.getElementById('office-interior').innerText = stage.icon;
         document.getElementById('office-desc').innerText = "Current: " + stage.n;
         
-        // Риск
         let risk = calcRisk();
         document.getElementById('risk-meter').innerText = risk.toFixed(1) + "%";
         if(risk > 50) document.getElementById('risk-meter').style.color = "orange";
-        if(risk > 80) document.getElementById('risk-meter').style.color = "red";
+        else if(risk > 80) document.getElementById('risk-meter').style.color = "red";
+        else document.getElementById('risk-meter').style.color = "var(--neon)";
 
-        // Кнопка офиса
         let next = officeStages.find(s => s.lvl === state.corp.office + 1);
         document.getElementById('btn-office-up').innerText = next ? `UPGRADE OFFICE (${next.cost.toLocaleString()})` : "MAX LEVEL";
     }
@@ -227,27 +226,24 @@
     function calcRisk() {
         if(!state.corp.active) return 0;
         let ind = industries.find(i => i.id === state.corp.industry);
-        // Риск растет от маркетинга, но падает от HR и уровня офиса
         let risk = ind.riskBase + (state.corp.lvl.mkt * 5) - (state.corp.lvl.hr * 8) - (state.corp.office * 2);
         return Math.max(0, Math.min(100, risk));
     }
 
     function save() { localStorage.setItem('llama_v_final_all', JSON.stringify(state)); }
 
-    // Тик дохода (раз в секунду)
     setInterval(() => {
         if(state.corp.active) {
             let income = calcIncome();
             let risk = calcRisk();
             
-            // Шанс кризиса
             if(Math.random() * 100 < risk / 50) { 
-                income /= 5; // Временное падение прибыли
+                income /= 5; 
                 console.log("CRISIS!");
             }
             
             state.corp.vault += income;
-            document.getElementById('corp-income').innerText = "+" + Math.floor(income).toLocaleString();
+            updateUI();
             save();
         }
     }, 1000);
