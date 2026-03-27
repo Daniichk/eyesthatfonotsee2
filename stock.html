@@ -256,8 +256,13 @@
 
     function varColor(n) { return getComputedStyle(document.documentElement).getPropertyValue(n).trim(); }
     function save() { localStorage.setItem('llama_v_final_all', JSON.stringify(state)); }
-    window.onkeydown = (e) => { if(e.key === 'ArrowLeft') window.location.href = 'corp.html'; };
-    window.onkeydown = (e) => { if(e.key === 'ArrowRight') window.location.href = 'country.html'; };
+    window.onkeydown = (e) => { 
+        if (e.key === 'ArrowLeft') {
+            window.location.href = 'corp.html'; 
+        } else if (e.key === 'ArrowRight') {
+            window.location.href = 'country.html'; 
+        }
+    };
     window.onresize = () => { canvas.width = canvas.offsetWidth; canvas.height = canvas.offsetHeight; };
 
     window.onresize();
