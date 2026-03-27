@@ -247,7 +247,10 @@
             save();
         }
     }, 1000);
-
+    window.addEventListener('keydown', (e) => {
+        if (e.key === 'ArrowRight') { save(); window.location.href = 'stock.html'; }
+    });
+    
     window.addEventListener('keydown', (e) => {
         if (e.key === 'ArrowLeft') { save(); window.location.href = 'game.html'; }
     });
