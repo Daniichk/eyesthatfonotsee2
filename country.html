@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Llama Empire: Global Control</title>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;900&family=Inter:wght@300;600&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --neon: #00ffcc; --gold: #ffd700; --bg: #05050a;
+            --danger: #ff1744; --success: #00c853;
+            --blue: #2196f3; --orange: #ff9800; --pink: #e91e63;
+        }
+        body {
+            margin: 0; background: var(--bg); color: white; font-family: 'Inter', sans-serif;
+            overflow: hidden; height: 100vh; font-size: 13px;
+        }
+
+        /* --- LOCK SCREEN --- */
+        #lock-screen {
+            position: fixed; inset: 0; background: radial-gradient(circle, #1a0a2e 0%, #000 100%);
+            z-index: 9999; display: flex; flex-direction: column; align-items: center; justify-content: center;
+            text-align: center; font-family: 'Orbitron'; border: 5px solid #111;
+        }
+        .lock-card { background: rgba(0,0,0,0.8); padding: 50px; border-radius: 20px; border: 1px solid #333; }
+        .price-tag { font-size: 2.5rem; color: var(--gold); margin: 20px 0; text-shadow: 0 0 20px rgba(255,215,0,0.5); }
+        
+        /* --- MAIN UI --- */
+        .header {
+            display: flex; justify-content: space-between; align-items: center;
+            padding: 10px 20px; background: #0a0a15; border-bottom: 2px solid var(--neon);
+        }
+        .stat-item { font-family: 'Orbitron'; font-size: 0.85rem; }
+        .stat-item span { color: var(--gold); }
+
+        .main-layout { display: grid; grid-template-columns: 320px 1fr; height: calc(100vh - 60px); }
+        .sidebar { background: #080810; border-right: 1px solid #1a1a1a; padding: 15px; overflow-y: auto; }
+        
+        .build-card {
+            background: rgba(255,255,255,0.03); border: 1px solid #222;
+            padding: 12px; border-radius: 8px; margin-bottom: 12px;
+        }
+        .buy-btn {
+            width: 100%; border: none; padding: 10px; border-radius: 4px; 
+            font-family: 'Orbitron'; cursor: pointer; font-weight: bold; transition: 0.2s;
+        }
+        .buy-btn:disabled { opacity: 0.3; cursor: not-allowed; filter: grayscale(1); }
+
+        /* --- CITY GRID --- */
+        .city-viewport {
+            padding: 20px; background: radial-gradient(circle, #1a1a2e 0%, #05050a 100%);
+            display: flex; flex-direction: column; align-items: center;
+        }
+        .city-grid {
+            display: grid; grid-template-columns: repeat(10, 50px); grid-template-rows: repeat(8, 50px);
+            gap: 5px; background: rgba(0,0,0,0.3); padding: 10px; border: 1px solid #222; border-radius: 8px;
+        }
+        .slot {
+            width: 50px; height: 50px; background: rgba(255,255,255,0.02);
+            border: 1px dashed #333; display: flex; align-items: center; justify-content: center; font-size: 1.5rem;
+        }
+        .slot.occupied { border: 1px solid var(--neon); background: rgba(0,255,204,0.05); border-style: solid; }
+
+        .bar-wrap { width: 100%; max-width: 500px; margin-bottom: 10px; }
+        .bar-bg { width: 100%; height: 8px; background: #111; border-radius: 4px; overflow: hidden; }
+        .bar-fill { height: 100%; transition: 0.5s; }
+    </style>
+</head>
+<body>
+
+<div id="lock-screen">
+    <div class="lock-card">
+        <h1 style="color:var(--neon); letter-spacing:5px;">SUPREME AUTHORITY</h1>
+        <p style="color:#666;">ACQUIRE TOTAL CONTROL OF THE NATION</p>
+        <div class="price-tag">$2,000,000,000,000,000,000,000</div>
+        
+        <div style="margin-bottom: 30px;">
+            <p style="font-size: 0.9rem;">YOUR CURRENT WALLET:</p>
+            <h2 id="current-wallet-display" style="color:var(--success)">$0</h2>
+        </div>
+
+        <div style="display:flex; gap:20px; justify-content:center;">
+            <button class="buy-btn" id="unlock-btn" style="width:250px; background:var(--neon); color:#000;" onclick="purchaseCountry()">UNLOCK EMPIRE</button>
+            <button class="buy-btn" style="width:200px; background:#222; color:#fff;" onclick="window.location.href='stock.html'">BACK TO TRADING</button>
+        </div>
+        <p id="lock-msg" style="margin-top:20px; color:var(--danger); display:none;">NOT ENOUGH FUNDS TO UNLOCK!</p>
+    </div>
+</div>
+
+<div class="header">
+    <div class="stat-item">BUDGET: $<span id="budget">0</span></div>
+    <div class="stat-item">POPULATION: <span id="pop">0</span></div>
+    <div class="stat-item">WALLET: $<span id="wallet">0</span></div>
+</div>
+
+<div class="main-layout">
+    <div class="sidebar">
+        <div style="font-family:'Orbitron'; color:var(--neon); margin-bottom:15px;">CONSTRUCTION MENU</div>
+        
+        <div class="build-card">
+            <h4>🏘️ HOUSING AREA</h4>
+            <p>Pop Limit +5,000 | Cost: $1Q</p>
+            <button class="buy-btn" style="background:var(--success)" onclick="build('house', 1e15, '🏘️')">BUILD</button>
+        </div>
+
+        <div class="build-card">
+            <h4>🏥 HOSPITAL</h4>
+            <p>Happiness +5% | Cost: $5Q</p>
+            <button class="buy-btn" style="background:var(--pink)" onclick="build('hospital', 5e15, '🏥')">BUILD</button>
+        </div>
+
+        <div class="build-card">
+            <h4>👮 POLICE DEPT</h4>
+            <p>Safety +5% | Cost: $3Q</p>
+            <button class="buy-btn" style="background:var(--blue)" onclick="build('police', 3e15, '👮')">BUILD</button>
+        </div>
+
+        <div class="build-card">
+            <h4>🚒 FIRE STATION</h4>
+            <p>Stability +5% | Cost: $2Q</p>
+            <button class="buy-btn" style="background:var(--orange)" onclick="build('fire', 2e15, '🚒')">BUILD</button>
+        </div>
+
+        <div class="build-card">
+            <h4>🏢 OFFICE DISTRICT</h4>
+            <p>Tax Income x2 | Cost: $10Q</p>
+            <button class="buy-btn" style="background:var(--gold); color:#000;" onclick="build('office', 10e15, '🏢')">BUILD</button>
+        </div>
+        
+        <button class="buy-btn" style="background:var(--danger); color:white;" onclick="embezzle()">EMBEZZLE $1Q</button>
+    </div>
+
+    <div class="city-viewport">
+        <div class="bar-wrap">
+            <div style="display:flex; justify-content:space-between; font-size:0.7rem;">HAPPINESS <span id="label-hap">50%</span></div>
+            <div class="bar-bg"><div id="fill-hap" class="bar-fill" style="background:var(--success)"></div></div>
+        </div>
+        <div class="bar-wrap">
+            <div style="display:flex; justify-content:space-between; font-size:0.7rem;">SAFETY <span id="label-saf">50%</span></div>
+            <div class="bar-bg"><div id="fill-saf" class="bar-fill" style="background:var(--blue)"></div></div>
+        </div>
+
+        <div class="city-grid" id="city-grid"></div>
+        <h2 id="city-name" style="font-family:'Orbitron'; margin-top:20px; letter-spacing:4px; color:var(--neon)">SUPREME LLAMA NATION</h2>
+    </div>
+</div>
+
+<script>
+    const COUNTRY_PRICE = 2e21; // 2 Sextillion
+    let state = JSON.parse(localStorage.getItem('llama_v_final_all')) || { score: 0 };
+    
+    if(!state.country) state.country = {
+        owned: false, budget: 0, pop: 1000, happiness: 50, safety: 50, buildings: []
+    };
+
+    function init() {
+        // Grid Gen
+        const grid = document.getElementById('city-grid');
+        for(let i=0; i<80; i++) {
+            const slot = document.createElement('div');
+            slot.className = 'slot';
+            slot.id = 'slot-' + i;
+            grid.appendChild(slot);
+        }
+
+        updateLockScreen();
+        renderBuildings();
+        setInterval(tick, 1000);
+    }
+
+    function updateLockScreen() {
+        const lock = document.getElementById('lock-screen');
+        const walletDisplay = document.getElementById('current-wallet-display');
+        const unlockBtn = document.getElementById('unlock-btn');
+        const lockMsg = document.getElementById('lock-msg');
+
+        walletDisplay.innerText = "$" + state.score.toLocaleString();
+
+        if (state.country.owned) {
+            lock.style.display = 'none';
+        } else {
+            if (state.score < COUNTRY_PRICE) {
+                unlockBtn.disabled = true;
+                lockMsg.style.display = 'block';
+            } else {
+                unlockBtn.disabled = false;
+                lockMsg.style.display = 'none';
+                unlockBtn.style.boxShadow = "0 0 30px var(--neon)";
+            }
+        }
+    }
+
+    function purchaseCountry() {
+        if (state.score >= COUNTRY_PRICE) {
+            state.score -= COUNTRY_PRICE;
+            state.country.owned = true;
+            state.country.budget = 1000000000000; // Start with 1 Trillion budget
+            save();
+            updateLockScreen();
+            alert("CONGRATULATIONS, SUPREME RULER!");
+        }
+    }
+
+    function build(type, cost, icon) {
+        if(state.country.budget >= cost && state.country.buildings.length < 80) {
+            state.country.budget -= cost;
+            state.country.buildings.push({type, icon});
+            if(type === 'house') state.country.pop += 5000;
+            if(type === 'police') state.country.safety = Math.min(100, state.country.safety + 5);
+            if(type === 'hospital') state.country.happiness = Math.min(100, state.country.happiness + 5);
+            save();
+            renderBuildings();
+        }
+    }
+
+    function renderBuildings() {
+        for(let i=0; i<80; i++) {
+            const s = document.getElementById('slot-' + i);
+            s.innerHTML = ""; s.className = 'slot';
+        }
+        state.country.buildings.forEach((b, i) => {
+            const s = document.getElementById('slot-' + i);
+            s.innerHTML = b.icon; s.className = 'slot occupied';
+        });
+    }
+
+    function embezzle() {
+        const amt = 1e15; // 1 Quadrillion
+        if(state.country.budget >= amt) {
+            state.country.budget -= amt;
+            state.score += amt;
+            state.country.happiness = Math.max(0, state.country.happiness - 15);
+            save();
+        }
+    }
+
+    function tick() {
+        if(!state.country.owned) {
+            updateLockScreen(); // Keep checking if user earned money elsewhere
+            return;
+        }
+
+        const officeMult = state.country.buildings.filter(b => b.type === 'office').length + 1;
+        const tax = (state.country.pop * 500000) * (state.country.happiness / 100) * officeMult;
+        state.country.budget += tax;
+
+        state.country.happiness = Math.max(0, state.country.happiness - 0.2);
+        state.country.safety = Math.max(0, state.country.safety - 0.1);
+
+        updateUI();
+        save();
+    }
+
+    function updateUI() {
+        document.getElementById('budget').innerText = Math.floor(state.country.budget).toLocaleString();
+        document.getElementById('pop').innerText = Math.floor(state.country.pop).toLocaleString();
+        document.getElementById('wallet').innerText = Math.floor(state.score).toLocaleString();
+        document.getElementById('label-hap').innerText = Math.floor(state.country.happiness) + "%";
+        document.getElementById('fill-hap').style.width = state.country.happiness + "%";
+        document.getElementById('label-saf').innerText = Math.floor(state.country.safety) + "%";
+        document.getElementById('fill-saf').style.width = state.country.safety + "%";
+    }
+
+    function save() { localStorage.setItem('llama_v_final_all', JSON.stringify(state)); }
+    window.onkeydown = (e) => { if(e.key === 'ArrowLeft') window.location.href = 'stock.html'; };
+
+    init();
+</script>
+</body>
+</html>
