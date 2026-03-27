@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="ru">
 <head>
     <meta charset="UTF-8">
     <title>Llama Empire: Global Control</title>
@@ -7,8 +7,9 @@
     <style>
         :root {
             --neon: #00ffcc; --gold: #ffd700; --bg: #05050a;
-            --danger: #ff1744; --success: #00c853;
+            --danger: #ff1744; --success: #00e676;
             --blue: #2196f3; --orange: #ff9800; --pink: #e91e63;
+            --border: #1a1a2e;
         }
         body {
             margin: 0; background: var(--bg); color: white; font-family: 'Inter', sans-serif;
@@ -17,143 +18,166 @@
 
         /* --- LOCK SCREEN --- */
         #lock-screen {
-            position: fixed; inset: 0; background: radial-gradient(circle, #1a0a2e 0%, #000 100%);
+            position: fixed; inset: 0; background: radial-gradient(circle, #0a0a20 0%, #000 100%);
             z-index: 9999; display: flex; flex-direction: column; align-items: center; justify-content: center;
-            text-align: center; font-family: 'Orbitron'; border: 5px solid #111;
+            text-align: center; font-family: 'Orbitron';
         }
-        .lock-card { background: rgba(0,0,0,0.8); padding: 50px; border-radius: 20px; border: 1px solid #333; }
-        .price-tag { font-size: 2.5rem; color: var(--gold); margin: 20px 0; text-shadow: 0 0 20px rgba(255,215,0,0.5); }
+        .lock-card { 
+            background: rgba(0,0,0,0.9); padding: 60px; border-radius: 24px; 
+            border: 2px solid var(--border); box-shadow: 0 0 50px rgba(0,0,0,1);
+        }
+        .price-tag { 
+            font-size: 3rem; color: var(--gold); margin: 30px 0; 
+            text-shadow: 0 0 30px rgba(255,215,0,0.4); font-weight: 900;
+        }
         
         /* --- MAIN UI --- */
         .header {
-            display: flex; justify-content: space-between; align-items: center;
-            padding: 10px 20px; background: #0a0a15; border-bottom: 2px solid var(--neon);
+            display: flex; justify-content: space-around; align-items: center;
+            padding: 15px; background: #0a0a1a; border-bottom: 2px solid var(--neon);
+            box-shadow: 0 5px 20px rgba(0,0,0,0.5);
         }
-        .stat-item { font-family: 'Orbitron'; font-size: 0.85rem; }
-        .stat-item span { color: var(--gold); }
+        .stat-item { font-family: 'Orbitron'; font-size: 0.9rem; color: #888; }
+        .stat-item span { color: white; font-weight: 900; }
 
-        .main-layout { display: grid; grid-template-columns: 320px 1fr; height: calc(100vh - 60px); }
-        .sidebar { background: #080810; border-right: 1px solid #1a1a1a; padding: 15px; overflow-y: auto; }
+        .main-layout { display: grid; grid-template-columns: 340px 1fr; height: calc(100vh - 65px); }
+        .sidebar { background: #07070f; border-right: 1px solid var(--border); padding: 20px; overflow-y: auto; }
         
         .build-card {
-            background: rgba(255,255,255,0.03); border: 1px solid #222;
-            padding: 12px; border-radius: 8px; margin-bottom: 12px;
+            background: rgba(255,255,255,0.03); border: 1px solid var(--border);
+            padding: 15px; border-radius: 12px; margin-bottom: 15px; transition: 0.3s;
         }
-        .buy-btn {
-            width: 100%; border: none; padding: 10px; border-radius: 4px; 
-            font-family: 'Orbitron'; cursor: pointer; font-weight: bold; transition: 0.2s;
-        }
-        .buy-btn:disabled { opacity: 0.3; cursor: not-allowed; filter: grayscale(1); }
+        .build-card:hover { border-color: var(--neon); background: rgba(0,255,204,0.02); }
+        .build-card h4 { margin: 0 0 5px 0; font-family: 'Orbitron'; font-size: 0.8rem; }
+        .build-card p { margin: 0 0 10px 0; color: #666; font-size: 0.7rem; }
 
-        /* --- CITY GRID --- */
+        .buy-btn {
+            width: 100%; border: none; padding: 12px; border-radius: 6px; 
+            font-family: 'Orbitron'; cursor: pointer; font-weight: 900; transition: 0.2s;
+            text-transform: uppercase; letter-spacing: 1px;
+        }
+        .buy-btn:active { transform: scale(0.96); }
+        .buy-btn:disabled { opacity: 0.2; cursor: not-allowed; }
+
+        /* --- CITY VIEWPORT --- */
         .city-viewport {
-            padding: 20px; background: radial-gradient(circle, #1a1a2e 0%, #05050a 100%);
-            display: flex; flex-direction: column; align-items: center;
+            padding: 30px; background: radial-gradient(circle at center, #101025 0%, #05050a 100%);
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
         }
         .city-grid {
-            display: grid; grid-template-columns: repeat(10, 50px); grid-template-rows: repeat(8, 50px);
-            gap: 5px; background: rgba(0,0,0,0.3); padding: 10px; border: 1px solid #222; border-radius: 8px;
+            display: grid; grid-template-columns: repeat(10, 55px); grid-template-rows: repeat(8, 55px);
+            gap: 8px; background: rgba(0,0,0,0.5); padding: 15px; border: 2px solid var(--border); border-radius: 12px;
+            box-shadow: 0 0 40px rgba(0,0,0,0.5);
         }
         .slot {
-            width: 50px; height: 50px; background: rgba(255,255,255,0.02);
-            border: 1px dashed #333; display: flex; align-items: center; justify-content: center; font-size: 1.5rem;
+            width: 55px; height: 55px; background: rgba(255,255,255,0.01);
+            border: 1px solid rgba(255,255,255,0.05); display: flex; align-items: center; 
+            justify-content: center; font-size: 1.8rem; border-radius: 4px; transition: 0.3s;
         }
-        .slot.occupied { border: 1px solid var(--neon); background: rgba(0,255,204,0.05); border-style: solid; }
+        .slot.occupied { 
+            border: 1px solid var(--neon); background: rgba(0,255,204,0.05); 
+            box-shadow: inset 0 0 10px rgba(0,255,204,0.1); 
+        }
 
-        .bar-wrap { width: 100%; max-width: 500px; margin-bottom: 10px; }
-        .bar-bg { width: 100%; height: 8px; background: #111; border-radius: 4px; overflow: hidden; }
-        .bar-fill { height: 100%; transition: 0.5s; }
+        .bar-wrap { width: 100%; max-width: 600px; margin-bottom: 15px; }
+        .bar-bg { width: 100%; height: 10px; background: #111; border-radius: 5px; overflow: hidden; border: 1px solid #222; }
+        .bar-fill { height: 100%; transition: 1s cubic-bezier(0.4, 0, 0.2, 1); width: 50%; }
     </style>
 </head>
 <body>
 
 <div id="lock-screen">
     <div class="lock-card">
-        <h1 style="color:var(--neon); letter-spacing:5px;">SUPREME AUTHORITY</h1>
-        <p style="color:#666;">ACQUIRE TOTAL CONTROL OF THE NATION</p>
-        <div class="price-tag">$2,000,000,000,000,000,000,000</div>
+        <h1 style="color:var(--neon); letter-spacing:8px; margin:0;">GLOBAL HEGEMONY</h1>
+        <p style="color:#555; margin-top:10px;">AUTHORIZED ACCESS ONLY</p>
+        <div class="price-tag">$<span id="lock-price-display">2.00Sx</span></div>
         
-        <div style="margin-bottom: 30px;">
-            <p style="font-size: 0.9rem;">YOUR CURRENT WALLET:</p>
-            <h2 id="current-wallet-display" style="color:var(--success)">$0</h2>
+        <div style="margin-bottom: 40px; background: rgba(255,255,255,0.02); padding: 20px; border-radius: 12px;">
+            <p style="font-size: 0.8rem; color: #888; margin: 0;">CURRENT CAPITAL:</p>
+            <h2 id="current-wallet-display" style="color:var(--success); margin: 5px 0 0 0; font-family: 'Orbitron';">$0</h2>
         </div>
 
         <div style="display:flex; gap:20px; justify-content:center;">
-            <button class="buy-btn" id="unlock-btn" style="width:250px; background:var(--neon); color:#000;" onclick="purchaseCountry()">UNLOCK EMPIRE</button>
-            <button class="buy-btn" style="width:200px; background:#222; color:#fff;" onclick="window.location.href='stock.html'">BACK TO TRADING</button>
+            <button class="buy-btn" id="unlock-btn" style="width:280px; background:var(--neon); color:#000;" onclick="purchaseCountry()">ESTABLISH CONTROL</button>
+            <button class="buy-btn" style="width:200px; background:#111; color:#fff; border: 1px solid #333;" onclick="window.location.href='stock.html'">BACK TO TRADE</button>
         </div>
-        <p id="lock-msg" style="margin-top:20px; color:var(--danger); display:none;">NOT ENOUGH FUNDS TO UNLOCK!</p>
+        <p id="lock-msg" style="margin-top:25px; color:var(--danger); font-family:'Orbitron'; font-size: 0.7rem; display:none;">INSUFFICIENT CAPITAL FOR GLOBAL DOMINATION</p>
     </div>
 </div>
 
 <div class="header">
-    <div class="stat-item">BUDGET: $<span id="budget">0</span></div>
+    <div class="stat-item">BUDGET: <span id="budget" style="color:var(--gold)">$0</span></div>
     <div class="stat-item">POPULATION: <span id="pop">0</span></div>
-    <div class="stat-item">WALLET: $<span id="wallet">0</span></div>
+    <div class="stat-item">WALLET: <span id="wallet" style="color:var(--success)">$0</span></div>
 </div>
 
 <div class="main-layout">
     <div class="sidebar">
-        <div style="font-family:'Orbitron'; color:var(--neon); margin-bottom:15px;">CONSTRUCTION MENU</div>
+        <div style="font-family:'Orbitron'; color:var(--neon); margin-bottom:20px; font-size: 0.8rem; letter-spacing: 2px;">STRATEGIC PLANNING</div>
         
         <div class="build-card">
-            <h4>🏘️ HOUSING AREA</h4>
-            <p>Pop Limit +5,000 | Cost: $1Q</p>
-            <button class="buy-btn" style="background:var(--success)" onclick="build('house', 1e15, '🏘️')">BUILD</button>
+            <h4>🏘️ HOUSING COMPLEX</h4>
+            <p>Pop +10K | Cost: $1Q</p>
+            <button class="buy-btn" style="background:var(--success); color:#000;" onclick="build('house', 1e15, '🏘️')">Construct</button>
         </div>
 
         <div class="build-card">
-            <h4>🏥 HOSPITAL</h4>
-            <p>Happiness +5% | Cost: $5Q</p>
-            <button class="buy-btn" style="background:var(--pink)" onclick="build('hospital', 5e15, '🏥')">BUILD</button>
+            <h4>🏥 MEDICAL CENTER</h4>
+            <p>Happiness +8% | Cost: $5Q</p>
+            <button class="buy-btn" style="background:var(--pink)" onclick="build('hospital', 5e15, '🏥')">Construct</button>
         </div>
 
         <div class="build-card">
-            <h4>👮 POLICE DEPT</h4>
-            <p>Safety +5% | Cost: $3Q</p>
-            <button class="buy-btn" style="background:var(--blue)" onclick="build('police', 3e15, '👮')">BUILD</button>
+            <h4>👮 SECURITY HUB</h4>
+            <p>Safety +8% | Cost: $3Q</p>
+            <button class="buy-btn" style="background:var(--blue)" onclick="build('police', 3e15, '👮')">Construct</button>
         </div>
 
         <div class="build-card">
-            <h4>🚒 FIRE STATION</h4>
-            <p>Stability +5% | Cost: $2Q</p>
-            <button class="buy-btn" style="background:var(--orange)" onclick="build('fire', 2e15, '🚒')">BUILD</button>
-        </div>
-
-        <div class="build-card">
-            <h4>🏢 OFFICE DISTRICT</h4>
-            <p>Tax Income x2 | Cost: $10Q</p>
-            <button class="buy-btn" style="background:var(--gold); color:#000;" onclick="build('office', 10e15, '🏢')">BUILD</button>
+            <h4>🏢 CORPORATE TOWER</h4>
+            <p>Tax Revenue x2 | Cost: $20Q</p>
+            <button class="buy-btn" style="background:var(--gold); color:#000;" onclick="build('office', 20e15, '🏢')">Construct</button>
         </div>
         
-        <button class="buy-btn" style="background:var(--danger); color:white;" onclick="embezzle()">EMBEZZLE $1Q</button>
+        <div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #222;">
+            <button class="buy-btn" style="background:var(--danger); color:white;" onclick="embezzle()">EMBEZZLE $10Q TO WALLET</button>
+            <p style="font-size: 0.6rem; color: #555; text-align: center; margin-top: 10px;">WARNING: High embezzlement causes civil unrest (-20% Happiness)</p>
+        </div>
     </div>
 
     <div class="city-viewport">
         <div class="bar-wrap">
-            <div style="display:flex; justify-content:space-between; font-size:0.7rem;">HAPPINESS <span id="label-hap">50%</span></div>
+            <div style="display:flex; justify-content:space-between; font-size:0.7rem; font-family:'Orbitron'; margin-bottom:5px;">PUBLIC HAPPINESS <span id="label-hap">50%</span></div>
             <div class="bar-bg"><div id="fill-hap" class="bar-fill" style="background:var(--success)"></div></div>
         </div>
         <div class="bar-wrap">
-            <div style="display:flex; justify-content:space-between; font-size:0.7rem;">SAFETY <span id="label-saf">50%</span></div>
+            <div style="display:flex; justify-content:space-between; font-size:0.7rem; font-family:'Orbitron'; margin-bottom:5px;">NATIONAL SAFETY <span id="label-saf">50%</span></div>
             <div class="bar-bg"><div id="fill-saf" class="bar-fill" style="background:var(--blue)"></div></div>
         </div>
 
         <div class="city-grid" id="city-grid"></div>
-        <h2 id="city-name" style="font-family:'Orbitron'; margin-top:20px; letter-spacing:4px; color:var(--neon)">SUPREME LLAMA NATION</h2>
+        <h2 id="city-name" style="font-family:'Orbitron'; margin-top:30px; letter-spacing:8px; color:var(--neon); text-shadow: 0 0 20px rgba(0,255,204,0.3);">SUPREME LLAMA NATION</h2>
     </div>
 </div>
 
 <script>
-    const COUNTRY_PRICE = 2e21; // 2 Sextillion
+    const COUNTRY_PRICE = 2e21; // 2 Секстиллиона
     let state = JSON.parse(localStorage.getItem('llama_v_final_all')) || { score: 0 };
     
     if(!state.country) state.country = {
-        owned: false, budget: 0, pop: 1000, happiness: 50, safety: 50, buildings: []
+        owned: false, budget: 0, pop: 10000, happiness: 60, safety: 60, buildings: []
     };
 
+    // Функция форматирования чисел (K, M, B, T, Q, Sx)
+    function fNum(n) {
+        if (n === 0) return "0";
+        if (n < 1000) return n.toFixed(0);
+        const s = ["", "K", "M", "B", "T", "Q", "Sx", "Sp", "Oc"];
+        const e = Math.floor(Math.log10(Math.abs(n)) / 3);
+        return (n / Math.pow(10, e * 3)).toFixed(2) + s[e];
+    }
+
     function init() {
-        // Grid Gen
         const grid = document.getElementById('city-grid');
         for(let i=0; i<80; i++) {
             const slot = document.createElement('div');
@@ -173,7 +197,7 @@
         const unlockBtn = document.getElementById('unlock-btn');
         const lockMsg = document.getElementById('lock-msg');
 
-        walletDisplay.innerText = "$" + state.score.toLocaleString();
+        walletDisplay.innerText = "$" + fNum(state.score);
 
         if (state.country.owned) {
             lock.style.display = 'none';
@@ -193,10 +217,9 @@
         if (state.score >= COUNTRY_PRICE) {
             state.score -= COUNTRY_PRICE;
             state.country.owned = true;
-            state.country.budget = 1000000000000; // Start with 1 Trillion budget
+            state.country.budget = 1e15; // Стартовый бюджет 1Q
             save();
             updateLockScreen();
-            alert("CONGRATULATIONS, SUPREME RULER!");
         }
     }
 
@@ -204,11 +227,14 @@
         if(state.country.budget >= cost && state.country.buildings.length < 80) {
             state.country.budget -= cost;
             state.country.buildings.push({type, icon});
-            if(type === 'house') state.country.pop += 5000;
-            if(type === 'police') state.country.safety = Math.min(100, state.country.safety + 5);
-            if(type === 'hospital') state.country.happiness = Math.min(100, state.country.happiness + 5);
+            
+            if(type === 'house') state.country.pop += 10000;
+            if(type === 'police') state.country.safety = Math.min(100, state.country.safety + 8);
+            if(type === 'hospital') state.country.happiness = Math.min(100, state.country.happiness + 8);
+            
             save();
             renderBuildings();
+            updateUI();
         }
     }
 
@@ -224,44 +250,54 @@
     }
 
     function embezzle() {
-        const amt = 1e15; // 1 Quadrillion
+        const amt = 10e15; // 10 Quadrillion
         if(state.country.budget >= amt) {
             state.country.budget -= amt;
             state.score += amt;
-            state.country.happiness = Math.max(0, state.country.happiness - 15);
+            state.country.happiness = Math.max(0, state.country.happiness - 20);
             save();
+            updateUI();
         }
     }
 
     function tick() {
         if(!state.country.owned) {
-            updateLockScreen(); // Keep checking if user earned money elsewhere
+            updateLockScreen();
             return;
         }
 
+        // Логика налогов: Население * Счастье * Бонус от офисов
         const officeMult = state.country.buildings.filter(b => b.type === 'office').length + 1;
-        const tax = (state.country.pop * 500000) * (state.country.happiness / 100) * officeMult;
-        state.country.budget += tax;
+        const taxBase = state.country.pop * 1000000; // 1M с человека
+        const taxTotal = taxBase * (state.country.happiness / 100) * officeMult;
+        
+        state.country.budget += taxTotal;
 
-        state.country.happiness = Math.max(0, state.country.happiness - 0.2);
-        state.country.safety = Math.max(0, state.country.safety - 0.1);
+        // Естественный износ параметров
+        state.country.happiness = Math.max(5, state.country.happiness - 0.15);
+        state.country.safety = Math.max(5, state.country.safety - 0.1);
 
         updateUI();
         save();
     }
 
     function updateUI() {
-        document.getElementById('budget').innerText = Math.floor(state.country.budget).toLocaleString();
-        document.getElementById('pop').innerText = Math.floor(state.country.pop).toLocaleString();
-        document.getElementById('wallet').innerText = Math.floor(state.score).toLocaleString();
+        document.getElementById('budget').innerText = "$" + fNum(state.country.budget);
+        document.getElementById('pop').innerText = fNum(state.country.pop);
+        document.getElementById('wallet').innerText = "$" + fNum(state.score);
+        
         document.getElementById('label-hap').innerText = Math.floor(state.country.happiness) + "%";
         document.getElementById('fill-hap').style.width = state.country.happiness + "%";
+        
         document.getElementById('label-saf').innerText = Math.floor(state.country.safety) + "%";
         document.getElementById('fill-saf').style.width = state.country.safety + "%";
     }
 
     function save() { localStorage.setItem('llama_v_final_all', JSON.stringify(state)); }
-    window.onkeydown = (e) => { if(e.key === 'ArrowLeft') window.location.href = 'stock.html'; };
+    
+    window.onkeydown = (e) => { 
+        if(e.key === 'ArrowLeft') window.location.href = 'stock.html'; 
+    };
 
     init();
 </script>
