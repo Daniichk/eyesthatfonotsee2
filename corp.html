@@ -6,147 +6,180 @@
     <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;900&family=Inter:wght@300;600&display=swap" rel="stylesheet">
     <style>
         :root {
-            --neon: #00ffcc; --gold: #ffd700; --bg: #0a0a12;
-            --danger: #ff0055; --glass: rgba(20, 20, 35, 0.95);
+            --neon: #00ffcc; --gold: #ffd700; --bg: #05050a;
+            --danger: #ff0055; --glass: rgba(10, 10, 20, 0.9);
+            --border: rgba(0, 255, 204, 0.3);
         }
         body {
             margin: 0; background: var(--bg); color: white; font-family: 'Inter', sans-serif;
             overflow: hidden; height: 100vh;
-            transition: background 1s ease;
         }
 
-        /* Визуализация Офиса */
+        /* Фоновая анимация сетки */
+        body::before {
+            content: ""; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: linear-gradient(var(--border) 1px, transparent 1px),
+                        linear-gradient(90deg, var(--border) 1px, transparent 1px);
+            background-size: 50px 50px; opacity: 0.05; z-index: 0;
+            transform: perspective(500px) rotateX(60deg); transform-origin: center bottom;
+        }
+
         #office-view {
             position: fixed; top: 0; left: 0; width: 100%; height: 60%;
             display: flex; justify-content: center; align-items: center;
             flex-direction: column; z-index: 1;
-            background: linear-gradient(to bottom, #1a1a2e, var(--bg));
         }
-        #office-interior { font-size: 10rem; filter: drop-shadow(0 0 20px rgba(0,255,204,0.3)); transition: 0.5s; }
-        #office-details { position: absolute; font-size: 3rem; bottom: 10%; }
+        #office-interior { 
+            font-size: 12rem; filter: drop-shadow(0 0 30px var(--neon)); 
+            transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); 
+        }
+        #office-interior:hover { transform: scale(1.1); }
 
-        /* Панель управления */
         .ui-layer {
-            position: fixed; bottom: 0; width: 100%; height: 45%;
+            position: fixed; bottom: 0; width: 100%; height: 42%;
             background: var(--glass); border-top: 2px solid var(--neon);
-            z-index: 10; padding: 20px; box-sizing: border-box;
-            display: grid; grid-template-columns: 1fr 1.5fr 1fr; gap: 20px;
+            backdrop-filter: blur(10px); z-index: 10; padding: 25px; box-sizing: border-box;
+            display: grid; grid-template-columns: 1fr 1.5fr 1fr; gap: 25px;
+            box-shadow: 0 -10px 30px rgba(0, 255, 204, 0.1);
         }
 
-        .stat-card { background: rgba(0,0,0,0.4); border: 1px solid rgba(0,255,204,0.2); padding: 15px; border-radius: 15px; }
-        .stat-card h2 { margin: 0; font-family: 'Orbitron'; color: var(--neon); font-size: 1rem; }
+        .stat-card { 
+            background: rgba(255, 255, 255, 0.03); 
+            border: 1px solid rgba(255, 255, 255, 0.1); 
+            padding: 15px; border-radius: 12px; position: relative;
+        }
+        .stat-card h2 { margin: 0 0 10px 0; font-family: 'Orbitron'; color: var(--neon); font-size: 0.9rem; letter-spacing: 2px; }
         
         .dept-btn {
-            background: rgba(255,255,255,0.05); border: 1px solid var(--neon);
-            color: white; padding: 10px; margin: 5px 0; width: 100%;
-            cursor: pointer; border-radius: 8px; font-family: 'Orbitron';
-            display: flex; justify-content: space-between; align-items: center;
+            background: rgba(0, 255, 204, 0.05); border: 1px solid var(--neon);
+            color: white; padding: 12px; margin: 8px 0; width: 100%;
+            cursor: pointer; border-radius: 6px; font-family: 'Orbitron';
+            transition: 0.2s; display: flex; justify-content: space-between;
         }
-        .dept-btn:hover { background: rgba(0,255,204,0.1); }
-        .dept-btn span { color: var(--gold); font-size: 0.8rem; }
+        .dept-btn:hover:not(:disabled) { background: var(--neon); color: black; box-shadow: 0 0 15px var(--neon); }
+        .dept-btn:disabled { opacity: 0.3; cursor: not-allowed; border-color: #444; }
 
         #setup-overlay {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: var(--bg); z-index: 100; display: flex;
+            background: var(--bg); z-index: 1000; display: flex;
             flex-direction: column; justify-content: center; align-items: center;
         }
         .industry-card {
-            padding: 20px; border: 2px solid var(--neon); margin: 10px;
-            width: 300px; cursor: pointer; border-radius: 15px; transition: 0.3s;
+            padding: 25px; border: 1px solid var(--neon); margin: 15px;
+            width: 280px; cursor: pointer; border-radius: 15px; transition: 0.4s;
+            background: rgba(0, 255, 204, 0.02); text-align: center;
         }
-        .industry-card:hover { background: var(--neon); color: black; }
+        .industry-card:hover { transform: translateY(-10px); background: var(--neon); color: black; }
 
-        .progress-bar { width: 100%; height: 10px; background: #222; border-radius: 5px; margin-top: 5px; overflow: hidden; }
-        .progress-fill { height: 100%; background: var(--neon); width: 0%; transition: 0.3s; }
+        .progress-bar { width: 100%; height: 4px; background: #111; border-radius: 2px; margin-bottom: 10px; }
+        .progress-fill { height: 100%; background: var(--neon); width: 0%; transition: 0.5s; box-shadow: 0 0 10px var(--neon); }
 
-        #risk-meter { color: var(--danger); font-weight: bold; }
-        .nav-hint { position: fixed; top: 20px; left: 20px; color: #555; font-family: 'Orbitron'; font-size: 0.8rem; }
+        .nav-hint { position: fixed; top: 20px; width: 100%; display: flex; justify-content: space-between; padding: 0 30px; box-sizing: border-box; color: #444; font-family: 'Orbitron'; font-size: 0.7rem; z-index: 5; }
+        
+        .cash-anim {
+            position: absolute; color: var(--gold); font-weight: bold; font-family: 'Orbitron';
+            animation: floatUp 1s forwards; pointer-events: none;
+        }
+        @keyframes floatUp { 
+            0% { transform: translateY(0); opacity: 1; } 
+            100% { transform: translateY(-100px); opacity: 0; } 
+        }
     </style>
 </head>
 <body>
 
-<div class="nav-hint">← ARROW LEFT TO STREET</div>
+<div class="nav-hint">
+    <span>[A] ← STREET</span>
+    <span>STOCKS [D] →</span>
+</div>
 
 <div id="setup-overlay" style="display: none;">
-    <h1 style="font-family:'Orbitron'">ВЫБЕРИТЕ СФЕРУ КОРПОРАЦИИ</h1>
+    <h1 style="font-family:'Orbitron'; letter-spacing: 5px; margin-bottom: 40px;">SELECT INDUSTRY</h1>
     <div id="industry-list" style="display: flex;"></div>
 </div>
 
 <div id="office-view">
     <div id="office-interior">📦</div>
-    <div id="office-details"></div>
-    <h1 id="corp-name" style="font-family:'Orbitron'; margin-top: 20px;">LLAMA CORP</h1>
+    <h1 id="corp-name-display" style="font-family:'Orbitron'; margin-top: 20px; letter-spacing: 10px;">LLAMA CORP</h1>
+    <div id="office-label" style="color: var(--gold); font-family: 'Orbitron'; font-size: 0.8rem;">BASEMENT DIVISION</div>
 </div>
 
 <div class="ui-layer">
     <div class="stat-card">
-        <h2>REVENUE</h2>
-        <div id="corp-balance" style="font-size: 1.5rem; font-weight: 900; margin: 10px 0;">0</div>
-        <hr style="border: 0; border-top: 1px solid #333;">
-        <p>Profit: <span id="corp-income" style="color:var(--neon)">+0</span> /sec</p>
-        <p>Risk Level: <span id="risk-meter">0%</span></p>
-        <button onclick="collectMoney()" class="dept-btn" style="background:var(--gold); color:black;">COLLECT CASH</button>
+        <h2>FINANCIALS</h2>
+        <div id="corp-balance" style="font-size: 1.8rem; font-weight: 900; color: white;">0</div>
+        <div style="margin: 10px 0; font-size: 0.9rem;">
+            Net: <span id="corp-income" style="color:var(--neon)">+0</span>/s<br>
+            Risk: <span id="risk-meter">0%</span>
+        </div>
+        <button onclick="collectMoney(event)" id="collect-btn" class="dept-btn" style="background:var(--gold); color:black; border:none; margin-top:15px;">
+            COLLECT VAULT <span id="vault-amount">$0</span>
+        </button>
     </div>
 
     <div class="stat-card">
         <h2>DEPARTMENTS</h2>
-        <button class="dept-btn" onclick="upgradeDept('prod')">📦 PRODUCT <span id="lvl-prod">Lv.0</span></button>
+        <button class="dept-btn" onclick="upgradeDept('prod')">PRODUCT <span id="lvl-prod">v0</span></button>
         <div class="progress-bar"><div id="fill-prod" class="progress-fill"></div></div>
         
-        <button class="dept-btn" onclick="upgradeDept('mkt')">📢 MARKETING <span id="lvl-mkt">Lv.0</span></button>
+        <button class="dept-btn" onclick="upgradeDept('mkt')">MARKETING <span id="lvl-mkt">v0</span></button>
         <div class="progress-bar"><div id="fill-mkt" class="progress-fill"></div></div>
         
-        <button class="dept-btn" onclick="upgradeDept('hr')">👥 HUMAN RES. <span id="lvl-hr">Lv.0</span></button>
+        <button class="dept-btn" onclick="upgradeDept('hr')">SECURITY <span id="lvl-hr">v0</span></button>
         <div class="progress-bar"><div id="fill-hr" class="progress-fill"></div></div>
     </div>
 
     <div class="stat-card">
-        <h2>FACILITY</h2>
-        <p id="office-desc">Current: Basement</p>
-        <button class="dept-btn" id="btn-office-up" onclick="upgradeOffice()">UPGRADE OFFICE</button>
-        <div style="margin-top: 20px; font-size: 0.8rem; color: #777;">
-            * Чем лучше офис, тем выше лимит бонусов и меньше базовый риск.
-        </div>
+        <h2>HQ EXPANSION</h2>
+        <div id="office-desc" style="font-size: 0.8rem; margin-bottom: 10px; color: #aaa;">Status: Startup</div>
+        <button class="dept-btn" id="btn-office-up" onclick="upgradeOffice()">UPGRADE HQ</button>
+        <p style="font-size: 0.7rem; color: #555; line-height: 1.4; margin-top: 15px;">
+            * Higher tier offices reduce operational risks and multiply base revenue.
+        </p>
     </div>
 </div>
 
 <script>
-    // Загрузка состояния
     let state = JSON.parse(localStorage.getItem('llama_v_final_all')) || { score: 0 };
     
-    // Инициализация корпоративных данных, если их нет
     if(!state.corp) {
         state.corp = {
-            active: false,
-            industry: null,
-            lvl: { prod: 0, mkt: 0, hr: 0 },
-            office: 1,
-            vault: 0,
-            lastTick: Date.now()
+            active: false, industry: null, lvl: { prod: 0, mkt: 0, hr: 0 },
+            office: 1, vault: 0, lastTick: Date.now()
         };
     }
 
     const industries = [
-        { id: 'tech', n: 'IT-GIANT', i: '💻', riskBase: 5, mult: 2, desc: 'Stable growth, low risk' },
-        { id: 'fashion', n: 'CLOTHES BRAND', i: '👕', riskBase: 15, mult: 5, desc: 'High profit, lots of hype' },
-        { id: 'space', n: 'COSMOS', i: '🚀', riskBase: 30, mult: 15, desc: 'Crazy money, huge risk' } 
+        { id: 'tech', n: 'NEURAL NETWORKS', i: '🧠', riskBase: 5, mult: 2, desc: 'Stable and scalable' },
+        { id: 'fashion', n: 'CYBER WEAR', i: '🧥', riskBase: 15, mult: 6, desc: 'Trend dependent' },
+        { id: 'space', n: 'ASTEROID MINING', i: '☄️', riskBase: 35, mult: 20, desc: 'High risk, stellar profit' } 
     ];
 
     const officeStages = [
         { lvl: 1, icon: '📦', n: 'BASEMENT', cost: 0 },
-        { lvl: 2, icon: '🏢', n: 'COWORKING', cost: 1e15 },
-        { lvl: 3, icon: '🏙️', n: 'SKYSCRAPER', cost: 1e18 },
-        { lvl: 4, icon: '💎', n: 'THE CITADEL OF LAMA', cost: 1e21 }
+        { lvl: 2, icon: '🏢', n: 'OFFICE CENTER', cost: 1e12 },
+        { lvl: 3, icon: '🏙️', n: 'SKYSCRAPER', cost: 1e16 },
+        { lvl: 4, icon: '💎', n: 'ORBITAL STATION', cost: 1e20 }
     ];
+
+    function fNum(n) {
+        if (n < 1e6) return n.toLocaleString();
+        if (n < 1e9) return (n/1e6).toFixed(2) + "M";
+        if (n < 1e12) return (n/1e9).toFixed(2) + "B";
+        if (n < 1e15) return (n/1e12).toFixed(2) + "T";
+        if (n < 1e18) return (n/1e15).toFixed(2) + "Q";
+        return n.toExponential(2);
+    }
 
     function init() {
         if(!state.corp.active) {
             document.getElementById('setup-overlay').style.display = 'flex';
             document.getElementById('industry-list').innerHTML = industries.map(ind => `
                 <div class="industry-card" onclick="startCorp('${ind.id}')">
-                    <h2>${ind.i} ${ind.n}</h2>
-                    <p>${ind.desc}</p>
-                    <small>Mult: x${ind.mult} | Risk: ${ind.riskBase}%</small>
+                    <div style="font-size: 3rem; margin-bottom: 10px;">${ind.i}</div>
+                    <div style="font-family:'Orbitron'; font-weight:900;">${ind.n}</div>
+                    <p style="font-size:0.8rem; height:40px;">${ind.desc}</p>
+                    <div style="font-size:0.7rem; color:var(--neon)">MULT: x${ind.mult} | RISK: ${ind.riskBase}%</div>
                 </div>
             `).join('');
         }
@@ -163,15 +196,13 @@
 
     function upgradeDept(type) {
         let currentLvl = state.corp.lvl[type];
-        let cost = 1e12 * Math.pow(10, currentLvl); 
+        let cost = 5e11 * Math.pow(8, currentLvl); 
         
         if(state.score >= cost) {
             state.score -= cost;
             state.corp.lvl[type]++;
             save();
             updateUI();
-        } else {
-            alert("YOU NEED MORE MONEY! PRICE: " + cost.toLocaleString());
         }
     }
 
@@ -185,74 +216,96 @@
         }
     }
 
-    function collectMoney() {
+    function collectMoney(e) {
+        if(state.corp.vault <= 0) return;
+        
+        // Анимация цифр
+        const anim = document.createElement('div');
+        anim.className = 'cash-anim';
+        anim.innerText = '+' + fNum(state.corp.vault);
+        anim.style.left = e.clientX + 'px';
+        anim.style.top = e.clientY + 'px';
+        document.body.appendChild(anim);
+        setTimeout(() => anim.remove(), 1000);
+
         state.score += state.corp.vault;
         state.corp.vault = 0;
         save();
         updateUI();
     }
 
-    function updateUI() {
-        if(!state.corp) return;
-        document.getElementById('corp-balance').innerText = Math.floor(state.score).toLocaleString();
-        document.getElementById('corp-income').innerText = "+" + Math.floor(calcIncome()).toLocaleString();
-        
-        for(let key in state.corp.lvl) {
-            document.getElementById('lvl-' + key).innerText = 'Lv.' + state.corp.lvl[key];
-            document.getElementById('fill-' + key).style.width = (state.corp.lvl[key] * 10) + '%';
-        }
-
-        let stage = officeStages.find(s => s.lvl === state.corp.office);
-        document.getElementById('office-interior').innerText = stage.icon;
-        document.getElementById('office-desc').innerText = "Current: " + stage.n;
-        
-        let risk = calcRisk();
-        document.getElementById('risk-meter').innerText = risk.toFixed(1) + "%";
-        if(risk > 50) document.getElementById('risk-meter').style.color = "orange";
-        else if(risk > 80) document.getElementById('risk-meter').style.color = "red";
-        else document.getElementById('risk-meter').style.color = "var(--neon)";
-
-        let next = officeStages.find(s => s.lvl === state.corp.office + 1);
-        document.getElementById('btn-office-up').innerText = next ? `UPGRADE OFFICE (${next.cost.toLocaleString()})` : "MAX LEVEL";
-    }
-
     function calcIncome() {
         if(!state.corp.active) return 0;
         let ind = industries.find(i => i.id === state.corp.industry);
-        let base = (state.corp.lvl.prod + 1) * (state.corp.lvl.mkt + 1) * 1e12;
-        return base * ind.mult * state.corp.office;
+        let base = (state.corp.lvl.prod + 1) * (state.corp.lvl.mkt + 1) * 5e8;
+        return base * ind.mult * Math.pow(2, state.corp.office - 1);
     }
 
     function calcRisk() {
         if(!state.corp.active) return 0;
         let ind = industries.find(i => i.id === state.corp.industry);
-        let risk = ind.riskBase + (state.corp.lvl.mkt * 5) - (state.corp.lvl.hr * 8) - (state.corp.office * 2);
-        return Math.max(0, Math.min(100, risk));
+        let risk = ind.riskBase + (state.corp.lvl.mkt * 3) - (state.corp.lvl.hr * 5) - (state.corp.office * 2);
+        return Math.max(2, Math.min(95, risk));
+    }
+
+    function updateUI() {
+        if(!state.corp.active) return;
+
+        document.getElementById('corp-balance').innerText = "$" + fNum(state.score);
+        document.getElementById('corp-income').innerText = "+" + fNum(calcIncome());
+        document.getElementById('vault-amount').innerText = "$" + fNum(state.corp.vault);
+        
+        for(let key in state.corp.lvl) {
+            let cost = 5e11 * Math.pow(8, state.corp.lvl[key]);
+            document.getElementById('lvl-' + key).innerText = 'v.' + state.corp.lvl[key];
+            document.getElementById('fill-' + key).style.width = Math.min(100, (state.corp.lvl[key] * 10)) + '%';
+        }
+
+        let stage = officeStages.find(s => s.lvl === state.corp.office);
+        document.getElementById('office-interior').innerText = stage.icon;
+        document.getElementById('office-label').innerText = stage.n + " DIVISION";
+        
+        let risk = calcRisk();
+        let riskMeter = document.getElementById('risk-meter');
+        riskMeter.innerText = risk.toFixed(1) + "%";
+        riskMeter.style.color = risk > 70 ? "var(--danger)" : (risk > 40 ? "orange" : "var(--neon)");
+
+        let next = officeStages.find(s => s.lvl === state.corp.office + 1);
+        const upBtn = document.getElementById('btn-office-up');
+        if(next) {
+            upBtn.innerText = `UPGRADE HQ (${fNum(next.cost)})`;
+            upBtn.disabled = state.score < next.cost;
+        } else {
+            upBtn.innerText = "MAX LEVEL";
+            upBtn.disabled = true;
+        }
     }
 
     function save() { localStorage.setItem('llama_v_final_all', JSON.stringify(state)); }
 
+    // Игровой цикл
     setInterval(() => {
         if(state.corp.active) {
             let income = calcIncome();
             let risk = calcRisk();
             
-            if(Math.random() * 100 < risk / 50) { 
-                income /= 5; 
-                console.log("CRISIS!");
+            // Шанс кризиса (временная потеря прибыли)
+            if(Math.random() * 100 < risk) { 
+                income = 0;
             }
             
             state.corp.vault += income;
             updateUI();
-            save();
         }
     }, 1000);
+
+    // Авто-сохранение раз в 5 сек
+    setInterval(save, 5000);
+
+    // Навигация
     window.addEventListener('keydown', (e) => {
-        if (e.key === 'ArrowRight') { save(); window.location.href = 'stock.html'; }
-    });
-    
-    window.addEventListener('keydown', (e) => {
-        if (e.key === 'ArrowLeft') { save(); window.location.href = 'game.html'; }
+        if (e.key.toLowerCase() === 'd' || e.key === 'ArrowRight') { save(); window.location.href = 'stock.html'; }
+        if (e.key.toLowerCase() === 'a' || e.key === 'ArrowLeft') { save(); window.location.href = 'game.html'; }
     });
 
     init();
