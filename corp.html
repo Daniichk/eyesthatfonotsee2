@@ -126,16 +126,16 @@
     }
 
     const industries = [
-        { id: 'tech', n: 'IT-ГИГАНТ', i: '💻', riskBase: 5, mult: 2, desc: 'Стабильный рост, низкий риск.' },
-        { id: 'fashion', n: 'БРЕНД ОДЕЖДЫ', i: '👕', riskBase: 15, mult: 5, desc: 'Высокая прибыль, много хайпа.' },
-        { id: 'space', n: 'КОСМОС', i: '🚀', riskBase: 30, mult: 15, desc: 'Безумные деньги, огромный риск.' }
+        { id: 'tech', n: 'IT-GIANT', i: '💻', riskBase: 5, mult: 2, desc: 'Stable growth, low risk' },
+        { id: 'fashion', n: 'CLOTHES BRAND', i: '👕', riskBase: 15, mult: 5, desc: 'High profit, lots of hype' },
+        { id: 'space', n: 'COSMOS', i: '🚀', riskBase: 30, mult: 15, desc: 'Crazy money, huge risk }
     ];
 
     const officeStages = [
-        { lvl: 1, icon: '📦', n: 'Подвал', cost: 0 },
-        { lvl: 2, icon: '🏢', n: 'Коворкинг', cost: 1e15 },
-        { lvl: 3, icon: '🏙️', n: 'Небоскреб', cost: 1e18 },
-        { lvl: 4, icon: '💎', n: 'Цитадель Ламы', cost: 1e21 }
+        { lvl: 1, icon: '📦', n: 'BASEMENT', cost: 0 },
+        { lvl: 2, icon: '🏢', n: 'COWORKING', cost: 1e15 },
+        { lvl: 3, icon: '🏙️', n: 'SKYSCRAPER', cost: 1e18 },
+        { lvl: 4, icon: '💎', n: 'THE CITADEL OF LAMA', cost: 1e21 }
     ];
 
     function init() {
@@ -170,7 +170,7 @@
             save();
             updateUI();
         } else {
-            alert("Нужно больше денег! Стоимость: " + cost.toLocaleString());
+            alert("YOU NEED MORE MONEY! PRICE: " + cost.toLocaleString());
         }
     }
 
@@ -253,7 +253,7 @@
     }, 1000);
 
     window.addEventListener('keydown', (e) => {
-        if (e.key === 'ArrowLeft') { save(); window.location.href = 'index.html'; }
+        if (e.key === 'ArrowLeft') { save(); window.location.href = 'game.html'; }
     });
 
     init();
