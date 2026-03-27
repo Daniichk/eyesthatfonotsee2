@@ -57,7 +57,6 @@
         
         #stage-assets { position: absolute; width: 100%; height: 100%; top: 0; left: 0; pointer-events: none; }
         
-        /* Анимация вращения активов (орбита) */
         @keyframes orbit {
             from { transform: rotate(0deg) translateX(var(--radius)) rotate(0deg); }
             to   { transform: rotate(360deg) translateX(var(--radius)) rotate(-360deg); }
@@ -140,15 +139,6 @@
                 <button id="c-start" class="btn" onclick="startCrash()">START FLIGHT</button>
                 <button id="c-cash" class="btn" style="display:none; background:var(--gold)" onclick="cashCrash()">EJECT</button>
             </div>
-            <div class="game-box">
-                <b>🔴 ROULETTE</b>
-                <div id="r-res" style="text-align:center; padding:10px; border:1px solid var(--border); margin:5px 0; font-family:'Orbitron';">READY</div>
-                <input type="number" id="bet-roulette" class="bet-input" value="5000" min="10">
-                <div style="display:grid; grid-template-columns:1fr 1fr; gap:5px;">
-                    <button class="btn" style="background:#ff0055; color:white" onclick="playRoulette('red')">RED (x2)</button>
-                    <button class="btn" style="background:#333; color:white" onclick="playRoulette('black')">BLACK (x2)</button>
-                </div>
-            </div>
         </div>
         
         <div id="t-phones" class="tab-content"><div id="phone-list"></div></div>
@@ -173,36 +163,46 @@
 </div>
 
 <script>
+    // --- FORMATTING UTILITY ---
+    function formatNum(n) {
+        if (n < 1e3) return n.toFixed(0);
+        const suffixes = [
+            { v: 1e3, s: "K" },   { v: 1e6, s: "M" },   { v: 1e9, s: "B" },
+            { v: 1e12, s: "T" },  { v: 1e15, s: "Q" },  { v: 1e18, s: "Qi" },
+            { v: 1e21, s: "Sx" }, { v: 1e24, s: "Sp" }
+        ];
+        let index = suffixes.length - 1;
+        while (index >= 0 && n < suffixes[index].v) index--;
+        return (n / suffixes[index].v).toFixed(2) + suffixes[index].s;
+    }
+
+    // --- NAVIGATION ---
     window.addEventListener('keydown', (e) => {
         if (e.key === 'Escape') { save(); window.location.replace('index.html'); }
         if (e.key === '`') {
             const overlay = document.getElementById('panic-overlay');
             overlay.style.display = (overlay.style.display === 'block') ? 'none' : 'block';
         }
-        // Добавлен клик по пробелу
         if (e.code === 'Space') {
             e.preventDefault(); 
             tap({ clientX: window.innerWidth / 2, clientY: window.innerHeight / 2 });
         }
-        if (e.keyCode == 123 || (e.ctrlKey && e.shiftKey && (e.keyCode == 73 || e.keyCode == 74 || e.keyCode == 67))) { e.preventDefault(); return false; }
         if (e.key === 'ArrowRight') { 
             save(); 
             window.location.href = 'corp.html'; 
         }
     });
-    
-    document.addEventListener('contextmenu', e => e.preventDefault());
 
     const ranks = [
         { req: 0, n: "CITIZEN" },
-        { req: 10000, n: "HUSTLER" },
-        { req: 250000, n: "ENTREPRENEUR" },
-        { req: 5000000, n: "INVESTOR" },
-        { req: 50000000, n: "TYCOON" },
-        { req: 1000000000, n: "STANFORD PRODIGY" },
-        { req: 50000000000, n: "GLOBAL CEO" },
-        { req: 1000000000000, n: "ILLUMINATI" },
-        { req: 50000000000000, n: "EMPEROR" }
+        { req: 1e4, n: "HUSTLER" },
+        { req: 2.5e5, n: "ENTREPRENEUR" },
+        { req: 5e6, n: "INVESTOR" },
+        { req: 5e7, n: "TYCOON" },
+        { req: 1e9, n: "STANFORD PRODIGY" },
+        { req: 5e10, n: "GLOBAL CEO" },
+        { req: 1e12, n: "ILLUMINATI" },
+        { req: 5e13, n: "EMPEROR" }
     ];
 
     const data = {
@@ -301,15 +301,12 @@
         let items = [];
         data.luxury.forEach(l => { if(state.lux[l.id]) items.push(l.i); });
         data.biz.forEach(b => { if(state.biz[b.id]) items.push(b.i); });
-        
-        // Отрисовка планет с орбитальной физикой (радиус, скорость, направление)
         items.slice(0, 40).forEach((item) => {
             let radius = 100 + Math.random() * 150; 
             let speed = 8 + Math.random() * 20; 
             let delay = -(Math.random() * speed); 
             let dir = Math.random() > 0.5 ? 'normal' : 'reverse';
-            let zIndex = Math.random() > 0.5 ? 2 : 10; // 2 - сзади, 10 - спереди
-            
+            let zIndex = Math.random() > 0.5 ? 2 : 10;
             html += `<span class="orbit-item" style="--radius: ${radius}px; animation-duration: ${speed}s; animation-delay: ${delay}s; animation-direction: ${dir}; z-index: ${zIndex};">${item}</span>`;
         });
         document.getElementById('stage-assets').innerHTML = html; 
@@ -331,18 +328,17 @@
             document.getElementById('rage-text').style.display = 'none';
         }
         state.score += clickVal;
-        spawnText(e.clientX || window.innerWidth/2, e.clientY || window.innerHeight/2, `+${Math.floor(clickVal)}`);
+        spawnText(e.clientX || window.innerWidth/2, e.clientY || window.innerHeight/2, `+${formatNum(clickVal)}`);
         updateUI();
     }
 
     function updateUI() {
-        document.getElementById('score').innerText = Math.floor(state.score).toLocaleString();
-        document.getElementById('lps-val').innerText = Math.floor(state.lps * state.gMult).toLocaleString();
-        document.getElementById('click-val').innerText = (state.mult * state.gMult).toFixed(1);
+        document.getElementById('score').innerText = formatNum(state.score);
+        document.getElementById('lps-val').innerText = formatNum(state.lps * state.gMult);
+        document.getElementById('click-val').innerText = formatNum(state.mult * state.gMult);
         
         let curRank = ranks.slice().reverse().find(r => state.score >= r.req) || ranks[0];
         document.getElementById('rank-name').innerText = curRank.n;
-
         renderAll();
     }
 
@@ -354,7 +350,7 @@
                 let owned = (type === 'lux' && state.lux[d.id]) || (type === 'skin' && state.skins.includes(d.id));
                 return `<div class="card ${state.score < cost && !owned ? 'locked' : ''}" onclick="buy('${type}','${d.id}')">
                     <div class="b-icon">${d.i}</div>
-                    <div class="b-info"><b>${d.n}</b><small>${owned ? 'OWNED' : 'Cost: '+cost.toLocaleString()}</small></div>
+                    <div class="b-info"><b>${d.n}</b><small>${owned ? 'OWNED' : 'Cost: '+formatNum(cost)}</small></div>
                     <div class="b-lvl">${lvl > 0 ? 'Lv '+lvl : ''}</div>
                 </div>`;
             }).join('');
@@ -400,7 +396,7 @@
                 if(res[0] === res[1] && res[1] === res[2]) { 
                     let win = bet * 20; 
                     state.score += win; 
-                    showNotif(`JACKPOT! +${win.toLocaleString()}`, "🎰"); 
+                    showNotif(`JACKPOT! +${formatNum(win)}`, "🎰"); 
                 }
                 updateUI();
             }
@@ -433,26 +429,12 @@
     }
     
     function cashMines() { 
-        if(!mActive) return; // Фикс бага: нельзя вывести, если игра уже закончена (мина)
+        if(!mActive) return;
         let win = Math.floor(mBet * mMult);
         state.score += win; mActive = false; 
-        showNotif(`WIN +${win.toLocaleString()}`, "💎"); 
+        showNotif(`WIN +${formatNum(win)}`, "💎"); 
         document.getElementById('m-start').style.display = 'block'; document.getElementById('bet-mines').style.display='block'; document.getElementById('m-cash').style.display = 'none'; 
         updateUI(); 
-    }
-
-    function playRoulette(color) {
-        let bet = getBet('bet-roulette');
-        if(state.score < bet) return showNotif("NOT ENOUGH", "⚠️");
-        state.score -= bet;
-        let d = document.getElementById('r-res'); d.innerText = "SPINNING...";
-        setTimeout(() => {
-            let n = Math.floor(Math.random()*37);
-            let c = n === 0 ? 'green' : (n%2 === 0 ? 'black' : 'red');
-            d.innerText = n + " (" + c.toUpperCase() + ")";
-            if(color === c) { let win = bet * 2; state.score += win; showNotif(`WIN! +${win.toLocaleString()}`, "🔴"); }
-            updateUI();
-        }, 800);
     }
 
     let cActive = false, cMult = 1.00, cBet = 0, cTimer = null, crashPoint = 0;
@@ -460,27 +442,19 @@
         let bet = getBet('bet-crash');
         if(state.score < bet || cActive) return showNotif("NOT ENOUGH", "⚠️");
         state.score -= bet; cBet = bet; cActive = true; cMult = 1.00;
-        
         document.getElementById('c-start').style.display = 'none';
         document.getElementById('bet-crash').style.display = 'none';
         document.getElementById('c-cash').style.display = 'block';
-        document.getElementById('c-cash').innerText = 'EJECT';
-        
-        let graph = document.getElementById('crash-graph');
         let line = document.getElementById('crash-line');
-        line.style.width = '0px'; line.style.transform = 'rotate(-0deg)'; line.style.background = 'var(--neon)';
-
+        line.style.width = '0px'; line.style.background = 'var(--neon)';
         crashPoint = (Math.random() < 0.3) ? (1 + Math.random()) : (1 + Math.random() * 5);
         if(Math.random() < 0.05) crashPoint += 10; 
-        
         cTimer = setInterval(() => {
             cMult += 0.02 * cMult; 
             document.getElementById('c-mult').innerText = cMult.toFixed(2) + 'x';
-            
             let progress = Math.min(100, (cMult - 1) * 10);
             line.style.width = progress + '%';
             line.style.transform = `rotate(-${Math.min(45, progress/2)}deg)`;
-
             if(cMult >= crashPoint) {
                 clearInterval(cTimer);
                 cActive = false;
@@ -493,7 +467,7 @@
                     document.getElementById('c-mult').style.color = 'var(--neon)';
                 }, 1500);
             } else {
-                if(cActive) document.getElementById('c-cash').innerText = `EJECT (${Math.floor(cBet * cMult).toLocaleString()})`;
+                if(cActive) document.getElementById('c-cash').innerText = `EJECT (${formatNum(cBet * cMult)})`;
             }
         }, 100);
         updateUI();
@@ -505,7 +479,7 @@
         cActive = false;
         let win = Math.floor(cBet * cMult);
         state.score += win;
-        showNotif(`EJECTED! +${win.toLocaleString()}`, "📈");
+        showNotif(`EJECTED! +${formatNum(win)}`, "📈");
         document.getElementById('c-start').style.display = 'block'; 
         document.getElementById('bet-crash').style.display = 'block'; 
         document.getElementById('c-cash').style.display = 'none';
