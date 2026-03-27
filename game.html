@@ -54,7 +54,23 @@
         #stage { display: flex; justify-content: center; align-items: center; position: relative; overflow: hidden; }
         #llama-main { font-size: 150px; cursor: pointer; user-select: none; transition: transform 0.05s; z-index: 5; position: relative; }
         #llama-main:active { transform: scale(0.9); }
-        #stage-assets { position: absolute; width: 80%; height: 80%; pointer-events: none; display: flex; flex-wrap: wrap; justify-content: center; align-content: center; gap: 10px; opacity: 0.6; z-index: 1; font-size: 2rem; }
+        
+        #stage-assets { position: absolute; width: 100%; height: 100%; top: 0; left: 0; pointer-events: none; }
+        
+        /* Анимация вращения активов (орбита) */
+        @keyframes orbit {
+            from { transform: rotate(0deg) translateX(var(--radius)) rotate(0deg); }
+            to   { transform: rotate(360deg) translateX(var(--radius)) rotate(-360deg); }
+        }
+        .orbit-item {
+            position: absolute;
+            top: 50%; left: 50%;
+            margin-top: -1.5rem; margin-left: -1.5rem;
+            width: 3rem; height: 3rem;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 2rem;
+            animation: orbit linear infinite;
+        }
 
         .game-box { background: rgba(255,255,255,0.03); border: 1px solid var(--border); border-radius: 12px; padding: 10px; margin-bottom: 12px; }
         .btn { background: var(--neon); color: #000; border: none; padding: 10px; border-radius: 6px; font-weight: 900; font-family: 'Orbitron'; cursor: pointer; width: 100%; font-size: 0.75rem; margin-top: 5px; }
@@ -157,18 +173,21 @@
 </div>
 
 <script>
-    // --- АЛГОРИТМ ПОЛНОЙ МАСКИРОВКИ ---
     window.addEventListener('keydown', (e) => {
         if (e.key === 'Escape') { save(); window.location.replace('index.html'); }
         if (e.key === '`') {
             const overlay = document.getElementById('panic-overlay');
             overlay.style.display = (overlay.style.display === 'block') ? 'none' : 'block';
         }
+        // Добавлен клик по пробелу
+        if (e.code === 'Space') {
+            e.preventDefault(); 
+            tap({ clientX: window.innerWidth / 2, clientY: window.innerHeight / 2 });
+        }
         if (e.keyCode == 123 || (e.ctrlKey && e.shiftKey && (e.keyCode == 73 || e.keyCode == 74 || e.keyCode == 67))) { e.preventDefault(); return false; }
     });
     document.addEventListener('contextmenu', e => e.preventDefault());
 
-    // --- СИСТЕМА РАНГОВ ---
     const ranks = [
         { req: 0, n: "CITIZEN" },
         { req: 10000, n: "HUSTLER" },
@@ -181,7 +200,6 @@
         { req: 50000000000000, n: "EMPEROR" }
     ];
 
-    // --- РАСШИРЕННАЯ БАЗА ДАННЫХ (+30 Assets, +20 Skins) ---
     const data = {
         phones: [
             { id: 'p1', n: "Siemens A50", c: 400, p: 1, i: "📟" },
@@ -275,10 +293,21 @@
 
     function updateStageAssets() {
         let html = '';
-        data.luxury.forEach(l => { if(state.lux[l.id]) html += `<span>${l.i}</span>`; });
-        data.biz.forEach(b => { if(state.biz[b.id]) html += `<span>${b.i}</span>`; });
-        // Ограничиваем количество, чтобы не захламлять экран
-        document.getElementById('stage-assets').innerHTML = html.slice(0, 300); 
+        let items = [];
+        data.luxury.forEach(l => { if(state.lux[l.id]) items.push(l.i); });
+        data.biz.forEach(b => { if(state.biz[b.id]) items.push(b.i); });
+        
+        // Отрисовка планет с орбитальной физикой (радиус, скорость, направление)
+        items.slice(0, 40).forEach((item) => {
+            let radius = 100 + Math.random() * 150; 
+            let speed = 8 + Math.random() * 20; 
+            let delay = -(Math.random() * speed); 
+            let dir = Math.random() > 0.5 ? 'normal' : 'reverse';
+            let zIndex = Math.random() > 0.5 ? 2 : 10; // 2 - сзади, 10 - спереди
+            
+            html += `<span class="orbit-item" style="--radius: ${radius}px; animation-duration: ${speed}s; animation-delay: ${delay}s; animation-direction: ${dir}; z-index: ${zIndex};">${item}</span>`;
+        });
+        document.getElementById('stage-assets').innerHTML = html; 
     }
 
     function tap(e) {
@@ -306,7 +335,6 @@
         document.getElementById('lps-val').innerText = Math.floor(state.lps * state.gMult).toLocaleString();
         document.getElementById('click-val').innerText = (state.mult * state.gMult).toFixed(1);
         
-        // Обновление ранга
         let curRank = ranks.slice().reverse().find(r => state.score >= r.req) || ranks[0];
         document.getElementById('rank-name').innerText = curRank.n;
 
@@ -349,7 +377,6 @@
         return Math.max(10, parseInt(document.getElementById(id).value) || 0);
     }
 
-    // --- КАЗИНО ИГРЫ ---
     function playSlots() {
         let bet = getBet('bet-slots');
         if(state.score < bet) return showNotif("NOT ENOUGH", "⚠️");
@@ -387,6 +414,7 @@
         document.getElementById('m-grid').innerHTML = Array.from({length:9}).map((_,i) => `<div class="mine-cell" onclick="hit(${i})">?</div>`).join('');
         updateUI();
     }
+    
     function hit(i) {
         if(!mActive) return;
         let c = document.getElementById('m-grid').children[i];
@@ -398,7 +426,9 @@
             c.innerText = '💎'; c.style.color = 'var(--neon)'; mMult += 0.5; document.getElementById('m-mult').innerText = 'x'+mMult.toFixed(1); 
         }
     }
+    
     function cashMines() { 
+        if(!mActive) return; // Фикс бага: нельзя вывести, если игра уже закончена (мина)
         let win = Math.floor(mBet * mMult);
         state.score += win; mActive = false; 
         showNotif(`WIN +${win.toLocaleString()}`, "💎"); 
@@ -420,7 +450,6 @@
         }, 800);
     }
 
-    // --- ИГРА CRASH ---
     let cActive = false, cMult = 1.00, cBet = 0, cTimer = null, crashPoint = 0;
     function startCrash() {
         let bet = getBet('bet-crash');
@@ -436,15 +465,13 @@
         let line = document.getElementById('crash-line');
         line.style.width = '0px'; line.style.transform = 'rotate(-0deg)'; line.style.background = 'var(--neon)';
 
-        // Логика краша: чем выше число, тем меньше шанс
         crashPoint = (Math.random() < 0.3) ? (1 + Math.random()) : (1 + Math.random() * 5);
-        if(Math.random() < 0.05) crashPoint += 10; // Редкий шанс улететь высоко
+        if(Math.random() < 0.05) crashPoint += 10; 
         
         cTimer = setInterval(() => {
-            cMult += 0.02 * cMult; // Ускоряется
+            cMult += 0.02 * cMult; 
             document.getElementById('c-mult').innerText = cMult.toFixed(2) + 'x';
             
-            // Визуал графика
             let progress = Math.min(100, (cMult - 1) * 10);
             line.style.width = progress + '%';
             line.style.transform = `rotate(-${Math.min(45, progress/2)}deg)`;
