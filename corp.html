@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>Llama Corp: Headquarters</title>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;900&family=Inter:wght@300;600&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --neon: #00ffcc; --gold: #ffd700; --bg: #0a0a12;
+            --danger: #ff0055; --glass: rgba(20, 20, 35, 0.95);
+        }
+        body {
+            margin: 0; background: var(--bg); color: white; font-family: 'Inter', sans-serif;
+            overflow: hidden; height: 100vh;
+            transition: background 1s ease;
+        }
+
+        /* Визуализация Офиса */
+        #office-view {
+            position: fixed; top: 0; left: 0; width: 100%; height: 60%;
+            display: flex; justify-content: center; align-items: center;
+            flex-direction: column; z-index: 1;
+            background: linear-gradient(to bottom, #1a1a2e, var(--bg));
+        }
+        #office-interior { font-size: 10rem; filter: drop-shadow(0 0 20px rgba(0,255,204,0.3)); transition: 0.5s; }
+        #office-details { position: absolute; font-size: 3rem; bottom: 10%; }
+
+        /* Панель управления */
+        .ui-layer {
+            position: fixed; bottom: 0; width: 100%; height: 45%;
+            background: var(--glass); border-top: 2px solid var(--neon);
+            z-index: 10; padding: 20px; box-sizing: border-box;
+            display: grid; grid-template-columns: 1fr 1.5fr 1fr; gap: 20px;
+        }
+
+        .stat-card { background: rgba(0,0,0,0.4); border: 1px solid rgba(0,255,204,0.2); padding: 15px; border-radius: 15px; }
+        .stat-card h2 { margin: 0; font-family: 'Orbitron'; color: var(--neon); font-size: 1rem; }
+        
+        .dept-btn {
+            background: rgba(255,255,255,0.05); border: 1px solid var(--neon);
+            color: white; padding: 10px; margin: 5px 0; width: 100%;
+            cursor: pointer; border-radius: 8px; font-family: 'Orbitron';
+            display: flex; justify-content: space-between; align-items: center;
+        }
+        .dept-btn:hover { background: rgba(0,255,204,0.1); }
+        .dept-btn span { color: var(--gold); font-size: 0.8rem; }
+
+        #setup-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: var(--bg); z-index: 100; display: flex;
+            flex-direction: column; justify-content: center; align-items: center;
+        }
+        .industry-card {
+            padding: 20px; border: 2px solid var(--neon); margin: 10px;
+            width: 300px; cursor: pointer; border-radius: 15px; transition: 0.3s;
+        }
+        .industry-card:hover { background: var(--neon); color: black; }
+
+        .progress-bar { width: 100%; height: 10px; background: #222; border-radius: 5px; margin-top: 5px; overflow: hidden; }
+        .progress-fill { height: 100%; background: var(--neon); width: 0%; transition: 0.3s; }
+
+        #risk-meter { color: var(--danger); font-weight: bold; }
+        .nav-hint { position: fixed; top: 20px; left: 20px; color: #555; font-family: 'Orbitron'; font-size: 0.8rem; }
+    </style>
+</head>
+<body>
+
+<div class="nav-hint">← ARROW LEFT TO STREET</div>
+
+<div id="setup-overlay" style="display: none;">
+    <h1 style="font-family:'Orbitron'">ВЫБЕРИТЕ СФЕРУ КОРПОРАЦИИ</h1>
+    <div id="industry-list" style="display: flex;"></div>
+</div>
+
+<div id="office-view">
+    <div id="office-interior">📦</div>
+    <div id="office-details"></div>
+    <h1 id="corp-name" style="font-family:'Orbitron'; margin-top: 20px;">LLAMA CORP</h1>
+</div>
+
+<div class="ui-layer">
+    <div class="stat-card">
+        <h2>REVENUE</h2>
+        <div id="corp-balance" style="font-size: 1.5rem; font-weight: 900; margin: 10px 0;">0</div>
+        <hr style="border: 0; border-top: 1px solid #333;">
+        <p>Profit: <span id="corp-income" style="color:var(--neon)">+0</span> /sec</p>
+        <p>Risk Level: <span id="risk-meter">0%</span></p>
+        <button onclick="collectMoney()" class="dept-btn" style="background:var(--gold); color:black;">COLLECT CASH</button>
+    </div>
+
+    <div class="stat-card">
+        <h2>DEPARTMENTS</h2>
+        <button class="dept-btn" onclick="upgradeDept('prod')">📦 PRODUCT <span id="lvl-prod">Lv.0</span></button>
+        <div class="progress-bar"><div id="fill-prod" class="progress-fill"></div></div>
+        
+        <button class="dept-btn" onclick="upgradeDept('mkt')">📢 MARKETING <span id="lvl-mkt">Lv.0</span></button>
+        <div class="progress-bar"><div id="fill-mkt" class="progress-fill"></div></div>
+        
+        <button class="dept-btn" onclick="upgradeDept('hr')">👥 HUMAN RES. <span id="lvl-hr">Lv.0</span></button>
+        <div class="progress-bar"><div id="fill-hr" class="progress-fill"></div></div>
+    </div>
+
+    <div class="stat-card">
+        <h2>FACILITY</h2>
+        <p id="office-desc">Current: Basement</p>
+        <button class="dept-btn" id="btn-office-up" onclick="upgradeOffice()">UPGRADE OFFICE</button>
+        <div style="margin-top: 20px; font-size: 0.8rem; color: #777;">
+            * Чем лучше офис, тем выше лимит бонусов и меньше базовый риск.
+        </div>
+    </div>
+</div>
+
+<script>
+    let state = JSON.parse(localStorage.getItem('llama_v_final_all'));
+    
+    // Инициализация корпоративных данных, если их нет
+    if(!state.corp) {
+        state.corp = {
+            active: false,
+            industry: null,
+            lvl: { prod: 0, mkt: 0, hr: 0 },
+            office: 1,
+            vault: 0,
+            lastTick: Date.now()
+        };
+    }
+
+    const industries = [
+        { id: 'tech', n: 'IT-ГИГАНТ', i: '💻', riskBase: 5, mult: 2, desc: 'Стабильный рост, низкий риск.' },
+        { id: 'fashion', n: 'БРЕНД ОДЕЖДЫ', i: '👕', riskBase: 15, mult: 5, desc: 'Высокая прибыль, много хайпа.' },
+        { id: 'space', n: 'КОСМОС', i: '🚀', riskBase: 30, mult: 15, desc: 'Безумные деньги, огромный риск.' }
+    ];
+
+    const officeStages = [
+        { lvl: 1, icon: '📦', n: 'Подвал', cost: 0 },
+        { lvl: 2, icon: '🏢', n: 'Коворкинг', cost: 1e15 },
+        { lvl: 3, icon: '🏙️', n: 'Небоскреб', cost: 1e18 },
+        { lvl: 4, icon: '💎', n: 'Цитадель Ламы', cost: 1e21 }
+    ];
+
+    function init() {
+        if(!state.corp.active) {
+            document.getElementById('setup-overlay').style.display = 'flex';
+            document.getElementById('industry-list').innerHTML = industries.map(ind => `
+                <div class="industry-card" onclick="startCorp('${ind.id}')">
+                    <h2>${ind.i} ${ind.n}</h2>
+                    <p>${ind.desc}</p>
+                    <small>Mult: x${ind.mult} | Risk: ${ind.riskBase}%</small>
+                </div>
+            `).join('');
+        }
+        updateUI();
+    }
+
+    function startCorp(id) {
+        state.corp.active = true;
+        state.corp.industry = id;
+        document.getElementById('setup-overlay').style.display = 'none';
+        save();
+        updateUI();
+    }
+
+    function upgradeDept(type) {
+        let currentLvl = state.corp.lvl[type];
+        let cost = 1e12 * Math.pow(10, currentLvl); // Очень дорого
+        
+        if(state.score >= cost) {
+            state.score -= cost;
+            state.corp.lvl[type]++;
+            save();
+            updateUI();
+        } else {
+            alert("Нужно больше денег! Стоимость: " + cost.toLocaleString());
+        }
+    }
+
+    function upgradeOffice() {
+        let next = officeStages.find(s => s.lvl === state.corp.office + 1);
+        if(next && state.score >= next.cost) {
+            state.score -= next.cost;
+            state.corp.office++;
+            save();
+            updateUI();
+        }
+    }
+
+    function collectMoney() {
+        state.score += state.corp.vault;
+        state.corp.vault = 0;
+        save();
+        updateUI();
+    }
+
+    function updateUI() {
+        document.getElementById('corp-balance').innerText = Math.floor(state.score).toLocaleString();
+        document.getElementById('corp-income').innerText = "+" + Math.floor(calcIncome()).toLocaleString();
+        
+        // Обновление уровней
+        for(let key in state.corp.lvl) {
+            document.getElementById('lvl-' + key).innerText = 'Lv.' + state.corp.lvl[key];
+            document.getElementById('fill-' + key).style.width = (state.corp.lvl[key] * 10) + '%';
+        }
+
+        // Визуал офиса
+        let stage = officeStages.find(s => s.lvl === state.corp.office);
+        document.getElementById('office-interior').innerText = stage.icon;
+        document.getElementById('office-desc').innerText = "Current: " + stage.n;
+        
+        // Риск
+        let risk = calcRisk();
+        document.getElementById('risk-meter').innerText = risk.toFixed(1) + "%";
+        if(risk > 50) document.getElementById('risk-meter').style.color = "orange";
+        if(risk > 80) document.getElementById('risk-meter').style.color = "red";
+
+        // Кнопка офиса
+        let next = officeStages.find(s => s.lvl === state.corp.office + 1);
+        document.getElementById('btn-office-up').innerText = next ? `UPGRADE OFFICE (${next.cost.toLocaleString()})` : "MAX LEVEL";
+    }
+
+    function calcIncome() {
+        if(!state.corp.active) return 0;
+        let ind = industries.find(i => i.id === state.corp.industry);
+        let base = (state.corp.lvl.prod + 1) * (state.corp.lvl.mkt + 1) * 1e12;
+        return base * ind.mult * state.corp.office;
+    }
+
+    function calcRisk() {
+        if(!state.corp.active) return 0;
+        let ind = industries.find(i => i.id === state.corp.industry);
+        // Риск растет от маркетинга, но падает от HR и уровня офиса
+        let risk = ind.riskBase + (state.corp.lvl.mkt * 5) - (state.corp.lvl.hr * 8) - (state.corp.office * 2);
+        return Math.max(0, Math.min(100, risk));
+    }
+
+    function save() { localStorage.setItem('llama_v_final_all', JSON.stringify(state)); }
+
+    // Тик дохода (раз в секунду)
+    setInterval(() => {
+        if(state.corp.active) {
+            let income = calcIncome();
+            let risk = calcRisk();
+            
+            // Шанс кризиса
+            if(Math.random() * 100 < risk / 50) { 
+                income /= 5; // Временное падение прибыли
+                console.log("CRISIS!");
+            }
+            
+            state.corp.vault += income;
+            document.getElementById('corp-income').innerText = "+" + Math.floor(income).toLocaleString();
+            save();
+        }
+    }, 1000);
+
+    window.addEventListener('keydown', (e) => {
+        if (e.key === 'ArrowLeft') { save(); window.location.href = 'index.html'; }
+    });
+
+    init();
+</script>
+</body>
+</html>
