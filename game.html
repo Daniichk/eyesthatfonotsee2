@@ -1,0 +1,505 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Research Data Analysis: Stanford Project</title>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Inter:wght@300;400;700;900&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --neon: #00ffcc; --accent: #ff0055; --gold: #ffd700; --bg: #050508;
+            --glass: rgba(15, 15, 25, 0.9); --border: rgba(0, 255, 204, 0.2);
+        }
+        body {
+            margin: 0; background: var(--bg); color: white; font-family: 'Inter', sans-serif;
+            overflow: hidden; height: 100vh; display: flex; flex-direction: column;
+            background-image: radial-gradient(circle at 50% 100%, #1a0033 0%, var(--bg) 80%);
+        }
+        
+        #panic-overlay {
+            display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: white; z-index: 999999;
+        }
+
+        @keyframes shake {
+            0% { transform: translate(0,0); }
+            20% { transform: translate(-5px, 5px); filter: hue-rotate(90deg); }
+            40% { transform: translate(5px, -5px); }
+            60% { transform: translate(-5px, -5px); filter: contrast(1.5); }
+            100% { transform: translate(0,0); }
+        }
+        .rage-active { animation: shake 0.1s infinite; }
+
+        header { padding: 15px; text-align: center; border-bottom: 1px solid var(--border); background: rgba(0,0,0,0.4); }
+        #score {
+            font-family: 'Orbitron'; font-size: 3.2rem; margin: 0; font-weight: 900;
+            background: linear-gradient(180deg, #fff, var(--neon));
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+            filter: drop-shadow(0 0 10px var(--neon));
+        }
+
+        .main-grid {
+            display: grid; grid-template-columns: 400px 1fr 400px; gap: 15px;
+            padding: 15px; height: calc(100vh - 140px); box-sizing: border-box;
+        }
+
+        .panel { background: var(--glass); border: 1px solid var(--border); border-radius: 20px; display: flex; flex-direction: column; overflow: hidden; }
+        .tab-nav { display: flex; background: rgba(0,0,0,0.5); border-bottom: 1px solid var(--border); }
+        .tab-btn { flex: 1; padding: 12px; background: none; border: none; color: #666; font-family: 'Orbitron'; font-size: 0.65rem; cursor: pointer; transition: 0.3s; font-weight: 900; }
+        .tab-btn.active { color: var(--neon); background: rgba(0,255,204,0.1); box-shadow: inset 0 -2px 0 var(--neon); }
+        
+        .tab-content { display: none; padding: 15px; overflow-y: auto; flex: 1; }
+        .tab-content.active { display: block; }
+
+        #stage { display: flex; justify-content: center; align-items: center; position: relative; overflow: hidden; }
+        #llama-main { font-size: 150px; cursor: pointer; user-select: none; transition: transform 0.05s; z-index: 5; position: relative; }
+        #llama-main:active { transform: scale(0.9); }
+        #stage-assets { position: absolute; width: 80%; height: 80%; pointer-events: none; display: flex; flex-wrap: wrap; justify-content: center; align-content: center; gap: 10px; opacity: 0.6; z-index: 1; font-size: 2rem; }
+
+        .game-box { background: rgba(255,255,255,0.03); border: 1px solid var(--border); border-radius: 12px; padding: 10px; margin-bottom: 12px; }
+        .btn { background: var(--neon); color: #000; border: none; padding: 10px; border-radius: 6px; font-weight: 900; font-family: 'Orbitron'; cursor: pointer; width: 100%; font-size: 0.75rem; margin-top: 5px; }
+        .bet-input { background: #000; border: 1px solid var(--border); color: var(--neon); padding: 8px; border-radius: 6px; font-family: 'Orbitron'; width: 100%; box-sizing: border-box; margin-bottom: 5px; font-weight: bold;}
+        
+        .card { background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.05); border-radius: 10px; padding: 10px; margin-bottom: 8px; display: flex; align-items: center; cursor: pointer; transition: 0.2s; }
+        .card:hover { border-color: var(--neon); background: rgba(0,255,204,0.05); }
+        .card.locked { opacity: 0.2; pointer-events: none; }
+        .b-icon { font-size: 1.8rem; margin-right: 12px; }
+        .b-info { flex: 1; }
+        .b-info b { display: block; font-family: 'Orbitron'; color: var(--neon); font-size: 0.8rem; }
+        .b-lvl { color: var(--gold); font-family: 'Orbitron'; font-size: 0.7rem; }
+
+        .mines-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 5px; margin-top: 10px; }
+        .mine-cell { background: #111; height: 45px; border-radius: 6px; display: flex; align-items: center; justify-content: center; cursor: pointer; border: 1px solid #222; font-size: 1.2rem; }
+        .slots-row { display: flex; justify-content: center; gap: 8px; margin: 10px 0; }
+        .slot-item { background: #000; width: 50px; height: 50px; display: flex; align-items: center; justify-content: center; border-radius: 8px; border: 1px solid var(--border); font-size: 1.8rem; }
+
+        #crash-graph { height: 80px; border-bottom: 2px solid rgba(255,255,255,0.2); border-left: 2px solid rgba(255,255,255,0.2); position: relative; margin: 10px 0; overflow: hidden; background: rgba(0,0,0,0.5); border-radius: 0 0 0 8px;}
+        .crash-line { position: absolute; bottom: 0; left: 0; background: var(--neon); height: 2px; transform-origin: left bottom; box-shadow: 0 0 10px var(--neon); transition: width 0.1s linear, transform 0.1s linear; }
+
+        #notif { position: fixed; top: -100px; left: 50%; transform: translateX(-50%); background: #000; border: 2px solid var(--gold); padding: 12px 25px; border-radius: 50px; z-index: 10000; transition: 0.4s; display: flex; align-items: center; gap: 10px; }
+        #notif.show { top: 20px; }
+        .float-text { position: fixed; font-family: 'Orbitron'; font-weight: 900; pointer-events: none; animation: floatUp 0.8s forwards; z-index: 1000; }
+        @keyframes floatUp { 0% { opacity: 1; transform: translateY(0); } 100% { opacity: 0; transform: translateY(-80px); } }
+    </style>
+</head>
+<body id="game-body">
+
+<div id="panic-overlay"></div>
+
+<div id="notif"><span id="n-icon">🏆</span> <div style="font-family:'Orbitron'"><b id="n-title" style="color:var(--gold)">INFO</b><br><small id="n-desc">Message</small></div></div>
+
+<header>
+    <div style="font-family:'Orbitron'; font-size:0.6rem; color:#444;">RANK: <span id="rank-name" style="color:var(--gold)">CITIZEN</span></div>
+    <h1 id="score">0</h1>
+    <div style="font-family:'Orbitron'; font-size:0.75rem; color:var(--neon)">
+        LPS: <span id="lps-val">0</span> | CLICK: x<span id="click-val">1.0</span> <span id="rage-text" style="color:var(--accent); display:none;">(RAGE x3!)</span>
+    </div>
+</header>
+
+<div class="main-grid">
+    <div class="panel">
+        <div class="tab-nav">
+            <button class="tab-btn active" onclick="tab('left', 't-casino')">🎰 CASINO</button>
+            <button class="tab-btn" onclick="tab('left', 't-phones')">📱 PHONES</button>
+        </div>
+        
+        <div id="t-casino" class="tab-content active">
+            <div class="game-box">
+                <b style="color:var(--gold)">🎰 SLOTS</b>
+                <div class="slots-row"><div class="slot-item" id="sl1">💎</div><div class="slot-item" id="sl2">💎</div><div class="slot-item" id="sl3">💎</div></div>
+                <input type="number" id="bet-slots" class="bet-input" value="2000" min="10">
+                <button class="btn" onclick="playSlots()">SPIN</button>
+            </div>
+            <div class="game-box">
+                <div style="display:flex; justify-content:space-between"><b>💣 MINES</b> <span id="m-mult" style="color:var(--neon)">x1.0</span></div>
+                <div class="mines-grid" id="m-grid"></div>
+                <input type="number" id="bet-mines" class="bet-input" value="5000" min="10">
+                <button id="m-start" class="btn" onclick="startMines()">STAKE</button>
+                <button id="m-cash" class="btn" style="display:none; background:var(--gold)" onclick="cashMines()">CASH OUT</button>
+            </div>
+            <div class="game-box">
+                <div style="display:flex; justify-content:space-between"><b>📈 CRASH</b> <span id="c-mult" style="color:var(--neon)">1.00x</span></div>
+                <div id="crash-graph"><div id="crash-line" class="crash-line"></div></div>
+                <input type="number" id="bet-crash" class="bet-input" value="10000" min="10">
+                <button id="c-start" class="btn" onclick="startCrash()">START FLIGHT</button>
+                <button id="c-cash" class="btn" style="display:none; background:var(--gold)" onclick="cashCrash()">EJECT</button>
+            </div>
+            <div class="game-box">
+                <b>🔴 ROULETTE</b>
+                <div id="r-res" style="text-align:center; padding:10px; border:1px solid var(--border); margin:5px 0; font-family:'Orbitron';">READY</div>
+                <input type="number" id="bet-roulette" class="bet-input" value="5000" min="10">
+                <div style="display:grid; grid-template-columns:1fr 1fr; gap:5px;">
+                    <button class="btn" style="background:#ff0055; color:white" onclick="playRoulette('red')">RED (x2)</button>
+                    <button class="btn" style="background:#333; color:white" onclick="playRoulette('black')">BLACK (x2)</button>
+                </div>
+            </div>
+        </div>
+        
+        <div id="t-phones" class="tab-content"><div id="phone-list"></div></div>
+    </div>
+
+    <div id="stage">
+        <div id="stage-assets"></div>
+        <div id="llama-main" onclick="tap(event)">🦙</div>
+    </div>
+
+    <div class="panel">
+        <div class="tab-nav">
+            <button class="tab-btn active" onclick="tab('right', 't-biz')">🏢 BIZ</button>
+            <button class="tab-btn" onclick="tab('right', 't-lux')">🏰 LUX</button>
+            <button class="tab-btn" onclick="tab('right', 't-skins')">🎭 SKINS</button>
+        </div>
+        
+        <div id="t-biz" class="tab-content active"><div id="biz-list"></div></div>
+        <div id="t-lux" class="tab-content"><div id="lux-list"></div></div>
+        <div id="t-skins" class="tab-content"><div id="skin-list"></div></div>
+    </div>
+</div>
+
+<script>
+    // --- АЛГОРИТМ ПОЛНОЙ МАСКИРОВКИ ---
+    window.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') { save(); window.location.replace('index.html'); }
+        if (e.key === '`') {
+            const overlay = document.getElementById('panic-overlay');
+            overlay.style.display = (overlay.style.display === 'block') ? 'none' : 'block';
+        }
+        if (e.keyCode == 123 || (e.ctrlKey && e.shiftKey && (e.keyCode == 73 || e.keyCode == 74 || e.keyCode == 67))) { e.preventDefault(); return false; }
+    });
+    document.addEventListener('contextmenu', e => e.preventDefault());
+
+    // --- СИСТЕМА РАНГОВ ---
+    const ranks = [
+        { req: 0, n: "CITIZEN" },
+        { req: 10000, n: "HUSTLER" },
+        { req: 250000, n: "ENTREPRENEUR" },
+        { req: 5000000, n: "INVESTOR" },
+        { req: 50000000, n: "TYCOON" },
+        { req: 1000000000, n: "STANFORD PRODIGY" },
+        { req: 50000000000, n: "GLOBAL CEO" },
+        { req: 1000000000000, n: "ILLUMINATI" },
+        { req: 50000000000000, n: "EMPEROR" }
+    ];
+
+    // --- РАСШИРЕННАЯ БАЗА ДАННЫХ (+30 Assets, +20 Skins) ---
+    const data = {
+        phones: [
+            { id: 'p1', n: "Siemens A50", c: 400, p: 1, i: "📟" },
+            { id: 'p2', n: "Nokia 3310", c: 3000, p: 10, i: "📱" },
+            { id: 'p3', n: "BlackBerry", c: 8000, p: 25, i: "⌨️" },
+            { id: 'p4', n: "iPhone 2G", c: 20000, p: 60, i: "📲" },
+            { id: 'p5', n: "Android Nexus", c: 65000, p: 200, i: "🤖" },
+            { id: 'p6', n: "Samsung Ultra", c: 150000, p: 500, i: "📱" },
+            { id: 'p7', n: "Crypto Phone", c: 450000, p: 1500, i: "🔒" },
+            { id: 'p8', n: "Neural Phone", c: 1200000, p: 4500, i: "🧠" },
+            { id: 'p9', n: "Holo-Com", c: 5000000, p: 18000, i: "📽️" },
+            { id: 'p10', n: "Quantum Link", c: 30000000, p: 120000, i: "📡" },
+            { id: 'p11', n: "Starlink Direct", c: 150000000, p: 600000, i: "🛰️" },
+            { id: 'p12', n: "Void Signal", c: 600000000, p: 3000000, i: "🕳️" },
+            { id: 'p13', n: "Telepathic Node", c: 2500000000, p: 12000000, i: "👁️" }
+        ],
+        biz: [
+            { id: 'b1', n: "Lemonade Stand", c: 1200, lps: 25, i: "🥤" },
+            { id: 'b2', n: "Vending Machine", c: 6000, lps: 100, i: "🍫" },
+            { id: 'b3', n: "Cyber Cafe", c: 25000, lps: 400, i: "☕" },
+            { id: 'b4', n: "Food Truck", c: 80000, lps: 1500, i: "🌮" },
+            { id: 'b5', n: "Crypto Farm", c: 350000, lps: 7000, i: "⛏️" },
+            { id: 'b6', n: "App Startup", c: 1500000, lps: 30000, i: "💻" },
+            { id: 'b7', n: "Stanford Lab", c: 10000000, lps: 150000, i: "🎓" },
+            { id: 'b8', n: "AI Data Center", c: 45000000, lps: 800000, i: "🗄️" },
+            { id: 'b9', n: "Robotics Plant", c: 250000000, lps: 5000000, i: "🦾" },
+            { id: 'b10', n: "Asteroid Mining", c: 1200000000, lps: 25000000, i: "☄️" },
+            { id: 'b11', n: "Star Bank", c: 6000000000, lps: 120000000, i: "🏦" },
+            { id: 'b12', n: "Dyson Sphere", c: 35000000000, lps: 800000000, i: "🌞" }
+        ],
+        luxury: [
+            { id: 'l1', n: "Rolex Watch", c: 50000, b: 1.05, i: "⌚" },
+            { id: 'l2', n: "Tesla S", c: 120000, b: 1.1, i: "🏎️" },
+            { id: 'l3', n: "Diamond Grill", c: 400000, b: 1.2, i: "💎" },
+            { id: 'l4', n: "Cyber Truck", c: 900000, b: 1.3, i: "🛻" },
+            { id: 'l5', n: "Helicopter", c: 2500000, b: 1.5, i: "🚁" },
+            { id: 'l6', n: "G-Wagon Neon", c: 5000000, b: 1.7, i: "🚙" },
+            { id: 'l7', n: "Private Jet", c: 12000000, b: 2.0, i: "✈️" },
+            { id: 'l8', n: "Penthouse", c: 25000000, b: 2.5, i: "🏙️" },
+            { id: 'l9', n: "Super Yacht", c: 80000000, b: 3.5, i: "🛥️" },
+            { id: 'l10', n: "Campus Building", c: 200000000, b: 4.5, i: "🏛️" },
+            { id: 'l11', n: "Island", c: 600000000, b: 6.5, i: "🏝️" },
+            { id: 'l12', n: "Space Station", c: 3000000000, b: 10.0, i: "🛰️" },
+            { id: 'l13', n: "Castle", c: 15000000000, b: 20.0, i: "🏰" },
+            { id: 'l14', n: "Moon Base", c: 80000000000, b: 50.0, i: "🌕" }
+        ],
+        skins: [
+            { id: 's0', n: "Llama", c: 0, i: "🦙" },
+            { id: 's1', n: "Doggo", c: 10000, i: "🐕" },
+            { id: 's2', n: "Cat", c: 50000, i: "🐱" },
+            { id: 's3', n: "Fox", c: 150000, i: "🦊" },
+            { id: 's4', n: "Panda", c: 400000, i: "🐼" },
+            { id: 's5', n: "Lion", c: 1000000, i: "🦁" },
+            { id: 's6', n: "Robot", c: 2000000, i: "🤖" },
+            { id: 's7', n: "Alien", c: 5000000, i: "👽" },
+            { id: 's8', n: "Ghost", c: 12000000, i: "👻" },
+            { id: 's9', n: "Ninja", c: 25000000, i: "🥷" },
+            { id: 's10', n: "Professor", c: 50000000, i: "👨‍🏫" },
+            { id: 's11', n: "Wizard", c: 100000000, i: "🧙" },
+            { id: 's12', n: "Demon", c: 200000000, i: "👹" },
+            { id: 's13', n: "Dragon", c: 500000000, i: "🐉" },
+            { id: 's14', n: "T-Rex", c: 1000000000, i: "🦖" },
+            { id: 's15', n: "Unicorn", c: 2500000000, i: "🦄" },
+            { id: 's16', n: "Golden Idol", c: 8000000000, i: "🗿" },
+            { id: 's17', n: "Crystal Llama", c: 20000000000, i: "🔮" },
+            { id: 's18', n: "Black Hole", c: 50000000000, i: "🌌" },
+            { id: 's19', n: "God Mode", c: 100000000000, i: "⚡" },
+            { id: 's20', n: "Matrix", c: 500000000000, i: "🟩" }
+        ]
+    };
+
+    let state = {
+        score: 0, ups: {}, biz: {}, lux: {}, skins: ['s0'], curSkin: "🦙",
+        mult: 1, lps: 0, gMult: 1, rage: 0, lastClick: 0
+    };
+
+    function save() { localStorage.setItem('llama_v_final_all', JSON.stringify(state)); }
+    function load() {
+        let s = localStorage.getItem('llama_v_final_all');
+        if(s) { state = JSON.parse(s); recalc(); updateUI(); }
+    }
+
+    function recalc() {
+        state.mult = 1; state.lps = 0; state.gMult = 1;
+        data.phones.forEach(p => state.mult += (state.ups[p.id] || 0) * p.p);
+        data.biz.forEach(b => state.lps += (state.biz[b.id] || 0) * b.lps);
+        data.luxury.forEach(l => { if(state.lux[l.id]) state.gMult *= l.b; });
+        document.getElementById('llama-main').innerText = state.curSkin;
+        updateStageAssets();
+    }
+
+    function updateStageAssets() {
+        let html = '';
+        data.luxury.forEach(l => { if(state.lux[l.id]) html += `<span>${l.i}</span>`; });
+        data.biz.forEach(b => { if(state.biz[b.id]) html += `<span>${b.i}</span>`; });
+        // Ограничиваем количество, чтобы не захламлять экран
+        document.getElementById('stage-assets').innerHTML = html.slice(0, 300); 
+    }
+
+    function tap(e) {
+        let now = Date.now();
+        if(now - state.lastClick < 150) state.rage = Math.min(state.rage + 0.1, 3);
+        else state.rage = Math.max(state.rage - 0.5, 0);
+        state.lastClick = now;
+
+        let clickVal = (state.mult * state.gMult);
+        if(state.rage >= 2) {
+            clickVal += (state.mult * 3);
+            document.getElementById('game-body').classList.add('rage-active');
+            document.getElementById('rage-text').style.display = 'inline';
+        } else {
+            document.getElementById('game-body').classList.remove('rage-active');
+            document.getElementById('rage-text').style.display = 'none';
+        }
+        state.score += clickVal;
+        spawnText(e.clientX || window.innerWidth/2, e.clientY || window.innerHeight/2, `+${Math.floor(clickVal)}`);
+        updateUI();
+    }
+
+    function updateUI() {
+        document.getElementById('score').innerText = Math.floor(state.score).toLocaleString();
+        document.getElementById('lps-val').innerText = Math.floor(state.lps * state.gMult).toLocaleString();
+        document.getElementById('click-val').innerText = (state.mult * state.gMult).toFixed(1);
+        
+        // Обновление ранга
+        let curRank = ranks.slice().reverse().find(r => state.score >= r.req) || ranks[0];
+        document.getElementById('rank-name').innerText = curRank.n;
+
+        renderAll();
+    }
+
+    function renderAll() {
+        const draw = (list, target, type) => {
+            document.getElementById(target).innerHTML = list.map(d => {
+                let lvl = (type === 'biz' ? state.biz[d.id] : (type === 'up' ? state.ups[d.id] : 0)) || 0;
+                let cost = Math.floor(d.c * Math.pow(1.65, lvl));
+                let owned = (type === 'lux' && state.lux[d.id]) || (type === 'skin' && state.skins.includes(d.id));
+                return `<div class="card ${state.score < cost && !owned ? 'locked' : ''}" onclick="buy('${type}','${d.id}')">
+                    <div class="b-icon">${d.i}</div>
+                    <div class="b-info"><b>${d.n}</b><small>${owned ? 'OWNED' : 'Cost: '+cost.toLocaleString()}</small></div>
+                    <div class="b-lvl">${lvl > 0 ? 'Lv '+lvl : ''}</div>
+                </div>`;
+            }).join('');
+        };
+        draw(data.phones, 'phone-list', 'up');
+        draw(data.biz, 'biz-list', 'biz');
+        draw(data.luxury, 'lux-list', 'lux');
+        draw(data.skins, 'skin-list', 'skin');
+    }
+
+    function buy(type, id) {
+        let item = [...data.phones, ...data.biz, ...data.luxury, ...data.skins].find(x => x.id === id);
+        let lvl = (type === 'biz' ? state.biz[id] : (type === 'up' ? state.ups[id] : 0)) || 0;
+        let cost = Math.floor(item.c * Math.pow(1.65, lvl));
+        if(state.score >= cost) {
+            if(type === 'lux' && !state.lux[id]) { state.score -= cost; state.lux[id] = true; }
+            else if(type === 'skin') { if(!state.skins.includes(id)) { state.score -= cost; state.skins.push(id); } state.curSkin = item.i; }
+            else if(type === 'biz') { state.score -= cost; state.biz[id] = lvl + 1; }
+            else if(type === 'up') { state.score -= cost; state.ups[id] = lvl + 1; }
+            recalc(); save(); updateUI();
+        }
+    }
+
+    function getBet(id) {
+        return Math.max(10, parseInt(document.getElementById(id).value) || 0);
+    }
+
+    // --- КАЗИНО ИГРЫ ---
+    function playSlots() {
+        let bet = getBet('bet-slots');
+        if(state.score < bet) return showNotif("NOT ENOUGH", "⚠️");
+        state.score -= bet;
+        const s = ['🍒','💎','🦙','7️⃣','🍋'];
+        let t = 0;
+        let iv = setInterval(() => {
+            document.getElementById('sl1').innerText = s[Math.floor(Math.random()*5)];
+            document.getElementById('sl2').innerText = s[Math.floor(Math.random()*5)];
+            document.getElementById('sl3').innerText = s[Math.floor(Math.random()*5)];
+            if(++t > 15) {
+                clearInterval(iv);
+                let res = [s[Math.floor(Math.random()*5)], s[Math.floor(Math.random()*5)], s[Math.floor(Math.random()*5)]];
+                if(Math.random() < 0.15) res = [res[0], res[0], res[0]];
+                document.getElementById('sl1').innerText = res[0]; document.getElementById('sl2').innerText = res[1]; document.getElementById('sl3').innerText = res[2];
+                if(res[0] === res[1] && res[1] === res[2]) { 
+                    let win = bet * 20; 
+                    state.score += win; 
+                    showNotif(`JACKPOT! +${win.toLocaleString()}`, "🎰"); 
+                }
+                updateUI();
+            }
+        }, 50);
+    }
+
+    let mActive = false, mMult = 1.0, mBomb = -1, mBet = 0;
+    function startMines() {
+        let bet = getBet('bet-mines');
+        if(state.score < bet || mActive) return showNotif("NOT ENOUGH", "⚠️");
+        state.score -= bet; mBet = bet; mActive = true; mMult = 1.0; mBomb = Math.floor(Math.random()*9);
+        document.getElementById('m-start').style.display = 'none';
+        document.getElementById('bet-mines').style.display = 'none';
+        document.getElementById('m-cash').style.display = 'block';
+        document.getElementById('m-mult').innerText = 'x1.0';
+        document.getElementById('m-grid').innerHTML = Array.from({length:9}).map((_,i) => `<div class="mine-cell" onclick="hit(${i})">?</div>`).join('');
+        updateUI();
+    }
+    function hit(i) {
+        if(!mActive) return;
+        let c = document.getElementById('m-grid').children[i];
+        if(c.innerText !== '?') return;
+        if(i === mBomb) { 
+            c.innerText = '💣'; c.style.color = 'var(--accent)'; mActive = false; 
+            setTimeout(() => { document.getElementById('m-start').style.display='block'; document.getElementById('bet-mines').style.display='block'; document.getElementById('m-cash').style.display='none'; }, 1000); 
+        } else { 
+            c.innerText = '💎'; c.style.color = 'var(--neon)'; mMult += 0.5; document.getElementById('m-mult').innerText = 'x'+mMult.toFixed(1); 
+        }
+    }
+    function cashMines() { 
+        let win = Math.floor(mBet * mMult);
+        state.score += win; mActive = false; 
+        showNotif(`WIN +${win.toLocaleString()}`, "💎"); 
+        document.getElementById('m-start').style.display = 'block'; document.getElementById('bet-mines').style.display='block'; document.getElementById('m-cash').style.display = 'none'; 
+        updateUI(); 
+    }
+
+    function playRoulette(color) {
+        let bet = getBet('bet-roulette');
+        if(state.score < bet) return showNotif("NOT ENOUGH", "⚠️");
+        state.score -= bet;
+        let d = document.getElementById('r-res'); d.innerText = "SPINNING...";
+        setTimeout(() => {
+            let n = Math.floor(Math.random()*37);
+            let c = n === 0 ? 'green' : (n%2 === 0 ? 'black' : 'red');
+            d.innerText = n + " (" + c.toUpperCase() + ")";
+            if(color === c) { let win = bet * 2; state.score += win; showNotif(`WIN! +${win.toLocaleString()}`, "🔴"); }
+            updateUI();
+        }, 800);
+    }
+
+    // --- ИГРА CRASH ---
+    let cActive = false, cMult = 1.00, cBet = 0, cTimer = null, crashPoint = 0;
+    function startCrash() {
+        let bet = getBet('bet-crash');
+        if(state.score < bet || cActive) return showNotif("NOT ENOUGH", "⚠️");
+        state.score -= bet; cBet = bet; cActive = true; cMult = 1.00;
+        
+        document.getElementById('c-start').style.display = 'none';
+        document.getElementById('bet-crash').style.display = 'none';
+        document.getElementById('c-cash').style.display = 'block';
+        document.getElementById('c-cash').innerText = 'EJECT';
+        
+        let graph = document.getElementById('crash-graph');
+        let line = document.getElementById('crash-line');
+        line.style.width = '0px'; line.style.transform = 'rotate(-0deg)'; line.style.background = 'var(--neon)';
+
+        // Логика краша: чем выше число, тем меньше шанс
+        crashPoint = (Math.random() < 0.3) ? (1 + Math.random()) : (1 + Math.random() * 5);
+        if(Math.random() < 0.05) crashPoint += 10; // Редкий шанс улететь высоко
+        
+        cTimer = setInterval(() => {
+            cMult += 0.02 * cMult; // Ускоряется
+            document.getElementById('c-mult').innerText = cMult.toFixed(2) + 'x';
+            
+            // Визуал графика
+            let progress = Math.min(100, (cMult - 1) * 10);
+            line.style.width = progress + '%';
+            line.style.transform = `rotate(-${Math.min(45, progress/2)}deg)`;
+
+            if(cMult >= crashPoint) {
+                clearInterval(cTimer);
+                cActive = false;
+                document.getElementById('c-mult').style.color = 'var(--accent)';
+                line.style.background = 'var(--accent)';
+                setTimeout(() => { 
+                    document.getElementById('c-start').style.display='block'; 
+                    document.getElementById('bet-crash').style.display='block'; 
+                    document.getElementById('c-cash').style.display='none'; 
+                    document.getElementById('c-mult').style.color = 'var(--neon)';
+                }, 1500);
+            } else {
+                if(cActive) document.getElementById('c-cash').innerText = `EJECT (${Math.floor(cBet * cMult).toLocaleString()})`;
+            }
+        }, 100);
+        updateUI();
+    }
+    
+    function cashCrash() {
+        if(!cActive) return;
+        clearInterval(cTimer);
+        cActive = false;
+        let win = Math.floor(cBet * cMult);
+        state.score += win;
+        showNotif(`EJECTED! +${win.toLocaleString()}`, "📈");
+        document.getElementById('c-start').style.display = 'block'; 
+        document.getElementById('bet-crash').style.display = 'block'; 
+        document.getElementById('c-cash').style.display = 'none';
+        updateUI();
+    }
+
+    function tab(side, id) {
+        const p = document.getElementById(id).parentElement;
+        p.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+        p.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+        event.currentTarget.classList.add('active');
+        document.getElementById(id).classList.add('active');
+    }
+    function spawnText(x, y, txt) {
+        const d = document.createElement('div'); d.className = 'float-text'; d.style.left = x+'px'; d.style.top = y+'px';
+        d.style.color = state.rage >= 2 ? 'var(--accent)' : 'var(--neon)'; d.innerText = txt; document.body.appendChild(d);
+        setTimeout(() => d.remove(), 800);
+    }
+    function showNotif(t, i) {
+        document.getElementById('n-title').innerText = t; document.getElementById('n-icon').innerText = i;
+        const n = document.getElementById('notif'); n.classList.add('show');
+        setTimeout(() => n.classList.remove('show'), 3000);
+    }
+
+    setInterval(() => { state.score += (state.lps * state.gMult / 10); if(state.rage > 0) state.rage = Math.max(state.rage - 0.04, 0); updateUI(); }, 100);
+    load();
+</script>
+</body>
+</html>
