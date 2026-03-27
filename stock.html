@@ -1,166 +1,180 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <title>Llama Stock Pro: Brokerage Edition</title>
+    <title>Llama Pro Terminal</title>
     <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;900&family=Inter:wght@300;600&display=swap" rel="stylesheet">
     <style>
         :root {
-            --neon: #00ffcc; --gold: #ffd700; --bg: #05050a;
-            --danger: #ff1744; --success: #00c853; --glass: rgba(20, 20, 35, 0.95);
+            --neon: #00ffcc; --gold: #ffd700; --bg: #050508;
+            --danger: #ff1744; --success: #00e676; --glass: rgba(10, 10, 20, 0.95);
+            --border: #1a1a2e;
         }
         body {
             margin: 0; background: var(--bg); color: white; font-family: 'Inter', sans-serif;
             overflow: hidden; height: 100vh; font-size: 13px;
         }
 
-        /* --- LAYOUT --- */
+        /* --- HEADER --- */
         .header {
             display: flex; justify-content: space-between; align-items: center;
-            padding: 12px 20px; background: #0a0a15; border-bottom: 1px solid #1a1a1a;
+            padding: 10px 25px; background: #0a0a1a; border-bottom: 1px solid var(--border);
         }
-        .main-balance { font-family: 'Orbitron'; color: #555; font-size: 0.9rem; }
-        .broker-balance { font-family: 'Orbitron'; color: var(--gold); font-size: 1.2rem; border-left: 2px solid #222; padding-left: 15px; }
+        .balance-group { display: flex; gap: 30px; align-items: center; }
+        .main-balance { font-family: 'Orbitron'; color: #666; font-size: 0.75rem; }
+        .broker-balance { font-family: 'Orbitron'; color: var(--gold); font-size: 1.1rem; }
 
+        /* --- LAYOUT --- */
         .main-layout {
             display: grid; grid-template-columns: 260px 1fr 300px; height: calc(100vh - 55px);
         }
 
-        /* --- SIDEBARS --- */
-        .sidebar { border-right: 1px solid #1a1a1a; background: #080810; overflow-y: auto; }
-        .sidebar-right { border-left: 1px solid #1a1a1a; border-right: none; }
-        .section-title { font-family: 'Orbitron'; color: #444; font-size: 0.65rem; padding: 15px; letter-spacing: 1px; }
+        .sidebar { background: #07070f; border-right: 1px solid var(--border); overflow-y: auto; }
+        .sidebar-right { border-left: 1px solid var(--border); background: #05050a; }
+        
+        .section-title { 
+            font-family: 'Orbitron'; color: #444; font-size: 0.6rem; 
+            padding: 15px; letter-spacing: 2px; text-transform: uppercase;
+        }
 
         .stock-item {
-            padding: 12px 15px; border-bottom: 1px solid #141414; cursor: pointer; transition: 0.1s;
+            padding: 12px 20px; border-bottom: 1px solid #111; cursor: pointer; transition: 0.2s;
+            display: flex; justify-content: space-between; align-items: center;
         }
-        .stock-item:hover { background: #121225; }
-        .stock-item.active { background: #152238; border-left: 3px solid var(--neon); }
+        .stock-item:hover { background: rgba(0,255,204,0.05); }
+        .stock-item.active { background: rgba(0,255,204,0.1); border-left: 3px solid var(--neon); }
+        .stock-ticker { font-family: 'Orbitron'; font-weight: 900; }
 
         /* --- CENTER ZONE --- */
-        .center-zone { padding: 15px; display: flex; flex-direction: column; overflow: hidden; background: #05050a; }
-        .chart-header { display: flex; justify-content: space-between; margin-bottom: 10px; }
+        .center-zone { padding: 20px; display: flex; flex-direction: column; gap: 15px; }
         
-        #canvas-container { flex-grow: 1; background: #000; border: 1px solid #1a1a1a; border-radius: 6px; position: relative; }
+        #canvas-container { 
+            flex-grow: 1; background: #000; border: 1px solid var(--border); 
+            border-radius: 8px; position: relative;
+        }
         canvas { width: 100%; height: 100%; }
 
-        /* --- TRANSFER PANEL --- */
         .transfer-panel {
-            background: rgba(255,215,0,0.05); padding: 10px 15px; border-radius: 8px; margin-bottom: 15px;
-            display: flex; gap: 10px; align-items: center; border: 1px solid rgba(255,215,0,0.1);
+            background: rgba(255,215,0,0.03); padding: 10px 20px; border-radius: 8px;
+            display: flex; gap: 12px; align-items: center; border: 1px solid rgba(255,215,0,0.1);
         }
-        .transfer-btn { background: none; border: 1px solid var(--gold); color: var(--gold); padding: 5px 10px; cursor: pointer; border-radius: 4px; font-size: 0.7rem; font-family: 'Orbitron'; }
-        .transfer-btn:hover { background: var(--gold); color: black; }
+        .btn-action { 
+            background: transparent; border: 1px solid var(--neon); color: var(--neon);
+            padding: 5px 10px; border-radius: 4px; font-family: 'Orbitron'; font-size: 0.65rem; cursor: pointer;
+        }
+        .btn-action:hover { background: var(--neon); color: black; }
 
         .trade-panel {
-            margin-top: 15px; background: #0a0a15; padding: 15px; border-radius: 8px;
-            display: grid; grid-template-columns: 1fr 1fr 1.5fr; align-items: center; border: 1px solid #1a1a1a;
+            background: #0d0d1a; padding: 20px; border-radius: 12px;
+            display: grid; grid-template-columns: 1fr 1fr 1.5fr; gap: 20px; border: 1px solid var(--border);
         }
 
-        .log-list { padding: 0 15px; font-size: 0.75rem; }
-        .log-item { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid #141414; }
-
-        .trade-btn { border: none; padding: 12px 25px; border-radius: 6px; font-family: 'Orbitron'; cursor: pointer; font-weight: 900; }
+        .price-display { font-size: 2.2rem; font-family: 'Orbitron'; font-weight: 900; color: var(--gold); }
+        .trade-btn { 
+            border: none; padding: 15px; border-radius: 6px; font-family: 'Orbitron'; 
+            cursor: pointer; font-weight: 900; text-transform: uppercase; transition: 0.2s;
+        }
         .btn-buy { background: var(--success); color: #000; }
         .btn-sell { background: var(--danger); color: #fff; }
+        .trade-btn:active { transform: scale(0.95); }
+
+        .log-item { padding: 8px 15px; border-bottom: 1px solid #111; font-size: 0.7rem; display: flex; justify-content: space-between; }
+        .nav-hint { font-size: 0.7rem; color: #444; font-family: 'Orbitron'; }
     </style>
 </head>
 <body>
 
 <div class="header">
-    <div style="display:flex; align-items:center; gap:20px;">
-        <div style="font-family: 'Orbitron'; color: var(--neon);">LLAMA PRO TERMINAL</div>
-        <div class="main-balance">WALLET: $<span id="wallet-balance">0</span></div>
+    <div class="balance-group">
+        <div style="font-family: 'Orbitron'; color: var(--neon); font-weight: 900; letter-spacing: 2px;">LLAMA TERMINAL</div>
+        <div class="main-balance">WALLET: <span style="color:white">$<span id="wallet-balance">0</span></span></div>
         <div class="broker-balance">BROKERAGE: $<span id="broker-balance">0</span></div>
     </div>
+    <div class="nav-hint">← [A] HQ | COUNTRY [D] →</div>
 </div>
 
 <div class="main-layout">
     <div class="sidebar">
-        <div class="section-title">MARKET WATCH</div>
+        <div class="section-title">Market Assets</div>
         <div id="stock-list"></div>
     </div>
 
     <div class="center-zone">
         <div class="transfer-panel">
-            <span style="font-size:0.7rem; color:var(--gold); font-family:'Orbitron'">FUND ACCOUNT:</span>
-            <button class="transfer-btn" onclick="transferMoney('deposit')">DEPOSIT $1M</button>
-            <button class="transfer-btn" onclick="transferMoney('withdraw')">WITHDRAW ALL</button>
-        </div>
-
-        <div class="chart-header">
-            <div>
-                <span id="active-symbol" style="font-family:'Orbitron'; font-size: 1.4rem; font-weight: 900;">---</span>
-                <span id="active-name" style="color: #555; margin-left: 10px;">---</span>
-            </div>
+            <span style="font-size:0.65rem; color:var(--gold); font-family:'Orbitron'">DEPOSIT TO BROKER:</span>
+            <button class="btn-action" onclick="transferMoney('deposit', 1000000)">$1M</button>
+            <button class="btn-action" onclick="transferMoney('deposit', 1000000000)">$1B</button>
+            <button class="btn-action" onclick="transferMoney('withdraw')">WITHDRAW ALL</button>
         </div>
 
         <div id="canvas-container">
+            <div style="position: absolute; top: 15px; left: 20px; z-index: 2;">
+                <span id="active-symbol" style="font-family:'Orbitron'; font-size: 1.8rem; font-weight: 900;">---</span>
+            </div>
             <canvas id="tradeChart"></canvas>
         </div>
 
         <div class="trade-panel">
             <div>
-                <div style="color:#444; font-size:0.6rem; font-family:'Orbitron'">SHARES OWNED</div>
-                <div style="font-size:1.1rem"><span id="user-shares">0</span></div>
+                <div style="color:#666; font-size:0.65rem; font-family:'Orbitron'; margin-bottom: 5px;">SHARES OWNED</div>
+                <div style="font-size:1.6rem; font-family:'Orbitron'"><span id="user-shares">0</span></div>
             </div>
             <div style="text-align: center;">
-                <div style="color:#444; font-size:0.6rem; font-family:'Orbitron'">PRICE</div>
-                <div style="font-size:1.5rem; color: var(--gold); font-weight: 900;">$<span id="live-price">0.00</span></div>
+                <div id="live-price" class="price-display">0.00</div>
+                <div id="price-change" style="font-size: 0.85rem; font-weight: bold;">0.00%</div>
             </div>
             <div style="display:flex; gap:10px;">
-                <button class="trade-btn btn-sell" onclick="trade('sell')">SELL</button>
-                <button class="trade-btn btn-buy" onclick="trade('buy')">BUY</button>
+                <button class="trade-btn btn-sell" style="flex:1" onclick="trade('sell')">Sell</button>
+                <button class="trade-btn btn-buy" style="flex:1" onclick="trade('buy')">Buy</button>
             </div>
         </div>
     </div>
 
     <div class="sidebar sidebar-right">
-        <div class="section-title">RECENT ACTIVITY</div>
-        <div class="log-list" id="trade-log"></div>
+        <div class="section-title">Execution Log</div>
+        <div id="trade-log"></div>
     </div>
 </div>
 
 <script>
-    // --- DATA SETUP ---
     let state = JSON.parse(localStorage.getItem('llama_v_final_all')) || { score: 0 };
-    
-    // Create market structure if it doesn't exist
-    if(!state.market) state.market = { 
-        portfolio: {}, 
-        history: {}, 
-        logs: [],
-        brokerageBalance: 0 
-    };
-    if(state.market.brokerageBalance === undefined) state.market.brokerageBalance = 0;
+    if(!state.market) state.market = { portfolio: {}, history: {}, logs: [], brokerageBalance: 0 };
 
     const stocksDef = [
-        { s: 'LLMA', n: 'Llama Bank', vol: 0.005, p: 250 },
-        { s: 'MRSX', n: 'Mars Exploration', vol: 0.1, p: 1800 },
-        { s: 'BANA', n: 'Banana PC', vol: 0.04, p: 400 },
-        { s: 'CRPT', n: 'Crypto Fund', vol: 0.18, p: 80 }
+        { s: 'LLMA', n: 'Llama Bank', p: 250 },
+        { s: 'MRSX', n: 'Mars Exploration', p: 1800 },
+        { s: 'BANA', n: 'Banana PC', p: 400 },
+        { s: 'CRPT', n: 'Crypto Fund', p: 80 }
     ];
 
     let selectedSymbol = 'LLMA';
     const canvas = document.getElementById('tradeChart');
     const ctx = canvas.getContext('2d');
 
-    // --- CORE LOGIC ---
+    // Тот самый формат K, M, B, T
+    function fNum(n) {
+        if (n === 0) return "0";
+        const s = ["", "K", "M", "B", "T", "Q"];
+        const e = Math.floor(Math.log10(Math.abs(n)) / 3);
+        if (e <= 0) return n.toLocaleString();
+        return (n / Math.pow(10, e * 3)).toFixed(2) + s[e];
+    }
+
     function init() {
         stocksDef.forEach(st => {
             if(!state.market.history[st.s]) {
-                state.market.history[st.s] = Array.from({length: 100}, () => st.p + (Math.random()-0.5)*100);
+                state.market.history[st.s] = Array.from({length: 60}, () => st.p + (Math.random()-0.5)*50);
             }
             if(!state.market.portfolio[st.s]) state.market.portfolio[st.s] = 0;
         });
         updateUI();
         setInterval(tick, 1000);
+        window.addEventListener('resize', resize);
+        resize();
     }
 
-    // NEW: Transfer between Wallet and Brokerage
-    function transferMoney(type) {
+    function transferMoney(type, amount) {
         if(type === 'deposit') {
-            const amount = 1000000;
             if(state.score >= amount) {
                 state.score -= amount;
                 state.market.brokerageBalance += amount;
@@ -169,104 +183,133 @@
             state.score += state.market.brokerageBalance;
             state.market.brokerageBalance = 0;
         }
-        save();
-        updateUI();
+        save(); updateUI();
     }
 
-    // FIXED: Trade logic using brokerageBalance
     function trade(type) {
         const hist = state.market.history[selectedSymbol];
         const price = hist[hist.length - 1];
-
-        if (type === 'buy') {
-            if (state.market.brokerageBalance >= price) {
-                state.market.brokerageBalance -= price; // Subtract from Brokerage
-                state.market.portfolio[selectedSymbol]++;
-                addLog('BUY', selectedSymbol, price);
-            } else {
-                alert("NOT ENOUGH FUNDS IN BROKERAGE ACCOUNT!");
-            }
-        } else if (type === 'sell') {
-            if (state.market.portfolio[selectedSymbol] > 0) {
-                state.market.brokerageBalance += price; // Add to Brokerage
-                state.market.portfolio[selectedSymbol]--;
-                addLog('SELL', selectedSymbol, price);
-            }
+        if (type === 'buy' && state.market.brokerageBalance >= price) {
+            state.market.brokerageBalance -= price;
+            state.market.portfolio[selectedSymbol]++;
+            addLog('BUY', price);
+        } else if (type === 'sell' && state.market.portfolio[selectedSymbol] > 0) {
+            state.market.brokerageBalance += price;
+            state.market.portfolio[selectedSymbol]--;
+            addLog('SELL', price);
         }
-        save();
-        updateUI();
+        save(); updateUI();
     }
 
-    function addLog(type, symbol, price) {
-        state.market.logs.unshift({ type, symbol, price, t: new Date().toLocaleTimeString() });
-        if(state.market.logs.length > 10) state.market.logs.pop();
+    function addLog(type, price) {
+        state.market.logs.unshift({ type, s: selectedSymbol, p: price, t: new Date().toLocaleTimeString() });
+        if(state.market.logs.length > 20) state.market.logs.pop();
+        renderLogs();
+    }
+
+    function renderLogs() {
         document.getElementById('trade-log').innerHTML = state.market.logs.map(l => `
             <div class="log-item">
-                <span style="color:${l.type==='BUY'?'var(--success)':'var(--danger)'}">${l.type} ${l.symbol}</span>
-                <span>$${l.price.toFixed(2)}</span>
+                <span style="color:${l.type==='BUY'?'var(--success)':'var(--danger)'}">${l.type} ${l.s}</span>
+                <span>$${fNum(l.p)}</span>
             </div>
         `).join('');
     }
 
-    function updateUI() {
-        document.getElementById('wallet-balance').innerText = Math.floor(state.score).toLocaleString();
-        document.getElementById('broker-balance').innerText = Math.floor(state.market.brokerageBalance).toLocaleString();
-        document.getElementById('user-shares').innerText = state.market.portfolio[selectedSymbol] || 0;
-        
-        const hist = state.market.history[selectedSymbol];
-        document.getElementById('live-price').innerText = hist[hist.length-1].toFixed(2);
-        document.getElementById('active-symbol').innerText = selectedSymbol;
-        
-        // Refresh sidebar prices
-        document.getElementById('stock-list').innerHTML = stocksDef.map(st => {
-            const p = state.market.history[st.s].slice(-1)[0];
-            return `<div class="stock-item ${st.s===selectedSymbol?'active':''}" onclick="selectStock('${st.s}')">
-                <b>${st.s}</b> <span style="float:right; color:var(--gold)">$${p.toFixed(2)}</span>
-            </div>`;
-        }).join('');
-    }
-
-    function selectStock(s) { selectedSymbol = s; updateUI(); }
-
-    function draw() {
-        ctx.clearRect(0,0,canvas.width,canvas.height);
-        const data = state.market.history[selectedSymbol].slice(-60);
-        const max = Math.max(...data);
-        const min = Math.min(...data);
-        ctx.beginPath();
-        ctx.strokeStyle = varColor('--neon');
-        ctx.lineWidth = 2;
-        data.forEach((p, i) => {
-            const x = (i/59) * canvas.width;
-            const y = canvas.height - ((p-min)/(max-min || 1))*canvas.height;
-            if(i===0) ctx.moveTo(x,y); else ctx.lineTo(x,y);
-        });
-        ctx.stroke();
-    }
-
     function tick() {
         stocksDef.forEach(st => {
-            const h = state.market.history[st.s];
-            h.push(Math.max(1, h[h.length-1] + (Math.random()-0.5)*10));
-            if(h.length > 200) h.shift();
+            let h = state.market.history[st.s];
+            let last = h[h.length-1];
+            // Случайное движение цены
+            let change = (Math.random() - 0.48) * (last * 0.04); 
+            h.push(Math.max(1, last + change));
+            if(h.length > 100) h.shift();
         });
         updateUI();
         draw();
     }
 
+    function updateUI() {
+        document.getElementById('wallet-balance').innerText = fNum(state.score);
+        document.getElementById('broker-balance').innerText = fNum(state.market.brokerageBalance);
+        document.getElementById('user-shares').innerText = fNum(state.market.portfolio[selectedSymbol]);
+        document.getElementById('active-symbol').innerText = selectedSymbol;
+
+        const hist = state.market.history[selectedSymbol];
+        const curPrice = hist[hist.length-1];
+        const prevPrice = hist[hist.length-2];
+        const diff = ((curPrice - prevPrice) / prevPrice * 100).toFixed(2);
+
+        document.getElementById('live-price').innerText = "$" + curPrice.toFixed(2);
+        const pChange = document.getElementById('price-change');
+        pChange.innerText = (diff > 0 ? "▲ " : "▼ ") + Math.abs(diff) + "%";
+        pChange.style.color = diff > 0 ? "var(--success)" : "var(--danger)";
+
+        document.getElementById('stock-list').innerHTML = stocksDef.map(st => {
+            const p = state.market.history[st.s].slice(-1)[0];
+            return `<div class="stock-item ${st.s===selectedSymbol?'active':''}" onclick="selectedSymbol='${st.s}'; updateUI();">
+                <span class="stock-ticker">${st.s}</span>
+                <span style="color:var(--gold)">$${fNum(p)}</span>
+            </div>`;
+        }).join('');
+    }
+
+    function draw() {
+        ctx.clearRect(0,0,canvas.width,canvas.height);
+        const data = state.market.history[selectedSymbol].slice(-60);
+        const max = Math.max(...data) * 1.05;
+        const min = Math.min(...data) * 0.95;
+        
+        // Сетка
+        ctx.strokeStyle = '#111';
+        ctx.lineWidth = 1;
+        for(let i=0; i<5; i++) {
+            let y = (canvas.height / 4) * i;
+            ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(canvas.width, y); ctx.stroke();
+        }
+
+        // График (Линия)
+        ctx.beginPath();
+        ctx.strokeStyle = varColor('--neon');
+        ctx.lineWidth = 3;
+        ctx.shadowBlur = 10;
+        ctx.shadowColor = varColor('--neon');
+        
+        data.forEach((p, i) => {
+            const x = (i/(data.length-1)) * canvas.width;
+            const y = canvas.height - ((p-min)/(max-min))*canvas.height;
+            if(i===0) ctx.moveTo(x,y); else ctx.lineTo(x,y);
+        });
+        ctx.stroke();
+        ctx.shadowBlur = 0;
+
+        // Градиент под графиком
+        ctx.lineTo(canvas.width, canvas.height);
+        ctx.lineTo(0, canvas.height);
+        const grad = ctx.createLinearGradient(0, 0, 0, canvas.height);
+        grad.addColorStop(0, 'rgba(0, 255, 204, 0.2)');
+        grad.addColorStop(1, 'transparent');
+        ctx.fillStyle = grad;
+        ctx.fill();
+    }
+
+    function resize() {
+        const container = document.getElementById('canvas-container');
+        canvas.width = container.clientWidth;
+        canvas.height = container.clientHeight;
+        draw();
+    }
+
     function varColor(n) { return getComputedStyle(document.documentElement).getPropertyValue(n).trim(); }
     function save() { localStorage.setItem('llama_v_final_all', JSON.stringify(state)); }
-    window.onkeydown = (e) => { 
-        if (e.key === 'ArrowLeft') {
-            window.location.href = 'corp.html'; 
-        } else if (e.key === 'ArrowRight') {
-            window.location.href = 'country.html'; 
-        }
-    };
-    window.onresize = () => { canvas.width = canvas.offsetWidth; canvas.height = canvas.offsetHeight; };
 
-    window.onresize();
+    window.onkeydown = (e) => { 
+        if (e.key === 'ArrowLeft') window.location.href = 'corp.html'; 
+        if (e.key === 'ArrowRight') window.location.href = 'country.html'; 
+    };
+
     init();
+    renderLogs();
 </script>
 </body>
 </html>
