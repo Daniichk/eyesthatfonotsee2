@@ -185,7 +185,12 @@
             tap({ clientX: window.innerWidth / 2, clientY: window.innerHeight / 2 });
         }
         if (e.keyCode == 123 || (e.ctrlKey && e.shiftKey && (e.keyCode == 73 || e.keyCode == 74 || e.keyCode == 67))) { e.preventDefault(); return false; }
+        if (e.key === 'ArrowRight') { 
+            save(); 
+            window.location.href = 'corp.html'; 
+        }
     });
+    
     document.addEventListener('contextmenu', e => e.preventDefault());
 
     const ranks = [
