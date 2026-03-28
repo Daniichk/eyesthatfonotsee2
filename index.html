@@ -2,267 +2,413 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <title>Stanford Research Data Analysis</title>
-    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Inter:wght@300;400;700&display=swap" rel="stylesheet">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Stanford Neural Link: Project LLAMA</title>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Inter:wght@300;400;700;900&display=swap" rel="stylesheet">
     <style>
-        :root { --neon: #00ffcc; --gold: #ffd700; --st-red: #8c1515; --bg: #050508; --glass: rgba(15, 15, 25, 0.9); }
-        body { margin: 0; background: var(--bg); color: white; font-family: 'Inter', sans-serif; overflow: hidden; height: 100vh; }
+        :root {
+            --neon: #00ffcc; --accent: #ff0055; --gold: #ffd700; --bg: #030305;
+            --glass: rgba(10, 10, 18, 0.95); --border: rgba(0, 255, 204, 0.15);
+            --st-red: #8c1515;
+        }
+        body {
+            margin: 0; background: var(--bg); color: white; font-family: 'Inter', sans-serif;
+            overflow: hidden; height: 100vh; display: flex; flex-direction: column;
+            background-image: radial-gradient(circle at 50% 0%, #1a0a2e 0%, var(--bg) 70%);
+        }
+
+        /* Panic Mask */
+        #panic-overlay {
+            display: none; position: fixed; inset: 0; background: white; z-index: 999999;
+            flex-direction: column; align-items: center; justify-content: center; color: #333;
+        }
+
+        /* Rage Animation */
+        @keyframes shake {
+            0% { transform: translate(0,0); }
+            25% { transform: translate(-2px, 2px); filter: hue-rotate(10deg); }
+            50% { transform: translate(2px, -2px); }
+            100% { transform: translate(0,0); }
+        }
+        .rage-active { animation: shake 0.05s infinite; border: 2px solid var(--accent) !important; }
+
+        header { 
+            padding: 20px; text-align: center; border-bottom: 1px solid var(--border); 
+            background: rgba(0,0,0,0.6); backdrop-filter: blur(10px);
+        }
+        #score {
+            font-family: 'Orbitron'; font-size: 3.5rem; margin: 0; font-weight: 900;
+            background: linear-gradient(180deg, #fff 30%, var(--neon));
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+            filter: drop-shadow(0 0 15px rgba(0, 255, 204, 0.4));
+        }
+
+        .main-grid {
+            display: grid; grid-template-columns: 380px 1fr 380px; gap: 20px;
+            padding: 20px; height: calc(100vh - 150px); box-sizing: border-box;
+        }
+
+        .panel { 
+            background: var(--glass); border: 1px solid var(--border); border-radius: 24px; 
+            display: flex; flex-direction: column; overflow: hidden;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+        }
+        .tab-nav { display: flex; background: rgba(0,0,0,0.8); padding: 5px; gap: 5px; }
+        .tab-btn { 
+            flex: 1; padding: 12px; background: none; border: none; color: #555; 
+            font-family: 'Orbitron'; font-size: 0.6rem; cursor: pointer; transition: 0.3s; 
+            border-radius: 15px; font-weight: 900;
+        }
+        .tab-btn.active { color: var(--neon); background: rgba(0,255,204,0.1); box-shadow: 0 0 15px rgba(0,255,204,0.1); }
         
-        /* Mask Layer */
-        #mask { position: fixed; inset: 0; background: #fff; z-index: 10000; color: #333; display: none; flex-direction: column; align-items: center; justify-content: center; font-family: sans-serif; }
-        #mask h1 { color: var(--st-red); margin: 0; }
+        .tab-content { display: none; padding: 15px; overflow-y: auto; flex: 1; scrollbar-width: none; }
+        .tab-content.active { display: block; }
 
-        /* Layout */
-        header { height: 70px; border-bottom: 2px solid var(--st-red); display: flex; flex-direction: column; align-items: center; justify-content: center; background: #000; }
-        #score { font-family: 'Orbitron'; font-size: 2.2rem; color: var(--gold); margin: 0; }
+        /* Stage & Llama */
+        #stage { display: flex; flex-direction: column; justify-content: center; align-items: center; position: relative; }
+        #llama-main { 
+            font-size: 160px; cursor: pointer; user-select: none; transition: transform 0.05s; z-index: 5;
+            filter: drop-shadow(0 0 30px rgba(0, 255, 204, 0.2));
+        }
+        #llama-main:active { transform: scale(0.92); }
 
-        .main-grid { display: grid; grid-template-columns: 350px 1fr 350px; gap: 10px; height: calc(100vh - 70px); padding: 10px; box-sizing: border-box; }
-        .panel { background: var(--glass); border: 1px solid rgba(255,255,255,0.1); border-radius: 15px; display: flex; flex-direction: column; overflow: hidden; }
+        /* Cards Design */
+        .card { 
+            background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08); 
+            border-radius: 16px; padding: 12px; margin-bottom: 10px; display: flex; 
+            align-items: center; cursor: pointer; transition: 0.2s;
+        }
+        .card:hover { 
+            border-color: var(--neon); background: rgba(0,255,204,0.08);
+            transform: translateX(5px);
+        }
+        .card.locked { opacity: 0.15; filter: grayscale(1); pointer-events: none; }
+        .b-icon { font-size: 2rem; margin-right: 15px; width: 40px; text-align: center; }
+        .b-info { flex: 1; }
+        .b-info b { display: block; font-family: 'Orbitron'; color: var(--neon); font-size: 0.85rem; letter-spacing: 1px; }
+        .b-info small { color: #888; font-size: 0.7rem; }
+        .b-lvl { color: var(--gold); font-family: 'Orbitron'; font-size: 0.8rem; font-weight: 900; }
+
+        /* Floating Nav Info */
+        .nav-hint { 
+            position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%);
+            font-family: 'Orbitron'; font-size: 0.6rem; color: #444; letter-spacing: 2px;
+        }
+
+        #notif { 
+            position: fixed; top: -100px; left: 50%; transform: translateX(-50%); 
+            background: #000; border: 1px solid var(--gold); padding: 15px 30px; 
+            border-radius: 15px; z-index: 10000; transition: 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            display: flex; align-items: center; gap: 15px; box-shadow: 0 0 30px rgba(255,215,0,0.2);
+        }
+        #notif.show { top: 30px; }
         
-        .tabs { display: flex; background: #000; overflow-x: auto; scrollbar-width: none; }
-        .tab-btn { flex-shrink: 0; padding: 12px; border: none; background: none; color: #555; cursor: pointer; font-family: 'Orbitron'; font-size: 0.6rem; }
-        .tab-btn.active { color: var(--neon); border-bottom: 2px solid var(--neon); }
-        
-        .content { flex: 1; overflow-y: auto; padding: 15px; display: none; scrollbar-width: thin; }
-        .content.active { display: block; }
-
-        /* Elements */
-        .item-card { background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.05); border-radius: 10px; padding: 10px; margin-bottom: 8px; display: flex; align-items: center; cursor: pointer; transition: 0.2s; }
-        .item-card:hover { background: rgba(255,255,255,0.07); }
-        .item-card.locked { opacity: 0.2; filter: grayscale(1); cursor: not-allowed; }
-        .icon { font-size: 1.5rem; margin-right: 12px; width: 30px; text-align: center; }
-        
-        #llama-target { font-size: 140px; cursor: pointer; transition: transform 0.05s; user-select: none; filter: drop-shadow(0 0 20px rgba(0,255,204,0.2)); }
-        #llama-target:active { transform: scale(0.95); }
-
-        .l-row { display: flex; justify-content: space-between; padding: 6px; border-bottom: 1px solid rgba(255,255,255,0.05); font-size: 0.75rem; }
-        .l-row.me { color: var(--gold); background: rgba(255,215,0,0.1); }
-
-        /* Navigation Arrows */
-        .nav-arrow { position: fixed; bottom: 20px; font-size: 2rem; color: var(--neon); cursor: pointer; z-index: 1000; opacity: 0.5; transition: 0.3s; text-decoration: none; }
-        .nav-arrow:hover { opacity: 1; transform: scale(1.2); }
-        .arrow-left { left: 20px; }
-        .arrow-right { right: 20px; }
+        .float-text { position: fixed; font-family: 'Orbitron'; font-weight: 900; pointer-events: none; animation: floatUp 0.6s ease-out forwards; z-index: 1000; font-size: 1.2rem; }
+        @keyframes floatUp { 0% { opacity: 1; transform: translateY(0) scale(1.2); } 100% { opacity: 0; transform: translateY(-100px) scale(0.8); } }
     </style>
 </head>
-<body>
+<body id="game-body">
 
-<div id="mask">
-    <h1>Stanford University</h1>
-    <p>Research Data Portal</p>
-    <input type="password" id="mask-input" placeholder="Enter Access Code" style="padding:10px; border:1px solid #ccc; border-radius:5px;">
-    <p style="font-size: 0.7rem; color: #999;">Password: llama</p>
+<div id="panic-overlay">
+    <h1 style="color:var(--st-red); font-family: serif; font-size: 3rem;">Stanford University</h1>
+    <p>Research Data Entry Terminal - Section 8</p>
+    <p>Enter 'llama' to unlock</p>
+    <input type="password" id="panic-input" style="padding: 10px; border: 1px solid #ccc;">
 </div>
 
+<div id="notif"><span id="n-icon" style="font-size:1.5rem">🏆</span> <div><b id="n-title" style="color:var(--gold)">ACHIEVEMENT</b><br><small id="n-desc">Research milestone reached</small></div></div>
+
 <header>
-    <div id="score">0</div>
-    <div style="font-size:0.7rem; font-family:'Orbitron'; color:var(--neon)">LPS: <span id="lps-val">0</span> | BONUS: +<span id="bonus-val">0</span>%</div>
+    <div style="font-family:'Orbitron'; font-size:0.6rem; color:#666; letter-spacing: 3px;">NEURAL INTERFACE: <span id="rank-name" style="color:var(--gold)">STAGIERE</span></div>
+    <h1 id="score">0</h1>
+    <div style="font-family:'Orbitron'; font-size:0.8rem; color:var(--neon)">
+        LPS: <span id="lps-val">0</span> | POWER: x<span id="click-val">1.0</span>
+        <span id="rage-ui" style="color:var(--accent); display:none; margin-left:10px;">[ RAGE MODE ACTIVE ]</span>
+    </div>
 </header>
 
 <div class="main-grid">
     <div class="panel">
-        <div class="tabs">
-            <button class="tab-btn active" onclick="tab('L', 't-tree')">TREE</button>
-            <button class="tab-btn" onclick="tab('L', 't-skins')">SKINS</button>
-            <button class="tab-btn" onclick="tab('L', 't-legacy')">FLEECE</button>
+        <div class="tab-nav">
+            <button class="tab-btn active" onclick="tab('L', 't-tree')">🌳 TREE</button>
+            <button class="tab-btn" onclick="tab('L', 't-legacy')">✨ FLEECE</button>
+            <button class="tab-btn" onclick="tab('L', 't-casino')">🎰 RISK</button>
         </div>
-        <div id="t-tree" class="content active"><div id="tree-list"></div></div>
-        <div id="t-skins" class="content"><div id="skins-grid"></div></div>
-        <div id="t-legacy" class="content">
-            <h3 style="color:var(--gold)">Prestige</h3>
-            <div id="leg-info" style="margin-bottom:10px;">Next Level at: 100K</div>
-            <button onclick="prestige()" style="width:100%; padding:15px; background:var(--gold); border:none; font-weight:900; cursor:pointer;">ASCEND</button>
+        <div id="t-tree" class="tab-content active"><div id="tree-list"></div></div>
+        <div id="t-legacy" class="tab-content">
+            <h2 style="color:var(--gold); font-family:'Orbitron';">Legacy Ascension</h2>
+            <p style="font-size:0.8rem; color:#888;">Сбросьте всё, чтобы получить <b>Золотое Руно</b>. Каждый уровень даёт +100% к силе клика навсегда.</p>
+            <div id="leg-avail" style="font-size:1.2rem; color:var(--neon); margin:20px 0;">Available: +0</div>
+            <button class="card" style="width:100%; justify-content:center; background:var(--gold); color:black; font-weight:900;" onclick="prestige()">ASCEND NOW</button>
+        </div>
+        <div id="t-casino" class="tab-content">
+            <p style="color:var(--gold); font-size:0.7rem;">RESEARCH FUNDING GAMBLE</p>
+            <div class="card" onclick="playSlots()"><b>🎰 SLOTS</b><small style="margin-left:10px;">(2k per spin)</small></div>
+            <div id="slot-res" style="text-align:center; font-size:2rem; letter-spacing:5px;">💎 💎 💎</div>
         </div>
     </div>
 
-    <div style="display:flex; flex-direction:column; align-items:center; justify-content:center; position:relative;">
-        <div id="llama-target" onclick="hit(event)">🦙</div>
-        <div style="margin-top:20px; font-family:'Orbitron'; font-size:0.8rem; color:var(--gold)" id="active-skin-name">Classic Llama</div>
+    <div id="stage">
+        <div id="llama-main" onclick="tap(event)">🦙</div>
+        <div style="margin-top:30px; font-family:'Orbitron'; font-size:0.7rem; color:#444;" id="skin-label">STANDARD_UNIT_01</div>
     </div>
 
     <div class="panel">
-        <div class="tabs">
-            <button class="tab-btn active" onclick="tab('R', 't-biz')">BIZ</button>
-            <button class="tab-btn" onclick="tab('R', 't-lux')">LUXURY</button>
-            <button class="tab-btn" onclick="tab('R', 't-rank')">RANK</button>
+        <div class="tab-nav">
+            <button class="tab-btn active" onclick="tab('R', 't-biz')">🏢 BIZ</button>
+            <button class="tab-btn" onclick="tab('R', 't-lux')">💎 LUX</button>
+            <button class="tab-btn" onclick="tab('R', 't-skins')">🎭 SKIN</button>
         </div>
-        <div id="t-biz" class="content active"><div id="biz-list"></div></div>
-        <div id="t-lux" class="content"><div id="lux-list"></div></div>
-        <div id="t-rank" class="content"><div id="rank-list">Loading...</div></div>
+        <div id="t-biz" class="tab-content active"><div id="biz-list"></div></div>
+        <div id="t-lux" class="tab-content"><div id="lux-list"></div></div>
+        <div id="t-skins" class="tab-content"><div id="skin-list"></div></div>
     </div>
 </div>
 
-<a href="country.html" class="nav-arrow arrow-left">◀</a>
-<a href="corp.html" class="nav-arrow arrow-right">▶</a>
+<div class="nav-hint">USE [ ← ] [ → ] TO NAVIGATE RESEARCH SECTORS</div>
 
 <script>
-    // --- ДАННЫЕ (30 бизнесов, 20 имуществ, 30 скинов) ---
+    // --- DATABASE (30 BIZ, 20 LUX, 30 SKINS) ---
     const DB = {
-        biz: Array.from({length: 35}, (_, i) => ({
-            id: 'b'+i, n: ["Homework Help", "Coffee Stall", "Vending Machine", "Cyber Cafe", "Tech Startup", "Crypto Mine", "AI Lab", "Space Port", "Quantum Hub", "Dyson Sphere"][i%10] + (i>10?` V.${Math.floor(i/10)}` : ""),
-            c: Math.floor(15 * Math.pow(2.2, i)), lps: Math.floor(1 * Math.pow(2.1, i)), i: ["📝","☕","🥤","💻","🚀","⛏️","🤖","🛰️","🔮","☀️"][i%10]
-        })),
-        lux: Array.from({length: 25}, (_, i) => ({
-            id: 'l'+i, n: ["Rolex Watch", "Tesla S", "Private Jet", "Stanford Villa", "Private Island", "Moon Base", "Mars Colony", "Diamond Castle"][i%8] + ` #${i+1}`,
-            c: Math.floor(1000 * Math.pow(4, i)), i: ["⌚","🚗","🛩️","🏰","🏝️","🌑","🚀","💎"][i%8]
-        })),
-        skins: Array.from({length: 30}, (_, i) => ({
-            id: 's'+i, n: `Skin Type-${i}`, char: ["🦙","🐫","🐑","🦌","🦄","🦁","🐯","🐉","🦖","👾"][i%10], c: i * 50000
-        })),
-        achs: [
-            { id: 'a1', n: "Novice", req: 1000, pre: null },
-            { id: 'a2', n: "Bachelor", req: 50000, pre: 'a1' },
-            { id: 'a3', n: "Master", req: 1000000, pre: 'a2' },
-            { id: 'a4', n: "PhD", req: 1e9, pre: 'a3' },
-            { id: 'a5', n: "Dean", req: 1e12, pre: 'a4' }
-        ]
+        biz: [
+            {n:"Cheat Sheet Sales", i:"📝", c:15, lps:2},
+            {n:"Coffee Delivery", i:"☕", c:150, lps:8},
+            {n:"Homework Bot", i:"🤖", c:1200, lps:45},
+            {n:"Campus Kiosk", i:"🏪", c:8500, lps:180},
+            {n:"Dorm Laundry", i:"🧺", c:45000, lps:750},
+            {n:"Vending Machine", i:"🥤", c:180000, lps:2200},
+            {n:"Cyber Cafe", i:"💻", c:650000, lps:6800},
+            {n:"Crypto Mining", i:"⛏️", c:2.5e6, lps:24000},
+            {n:"App Startup", i:"📱", c:12e6, lps:95000},
+            {n:"AI Research Lab", i:"🔬", c:85e6, lps:450000},
+            {n:"Stock Agency", i:"📈", c:450e6, lps:2.1e6},
+            {n:"Stanford Hub", i:"🏛️", c:2e9, lps:12e6},
+            {n:"Robotics Plant", i:"🦾", c:15e9, lps:85e6},
+            {n:"Sat-Link Tower", i:"📡", c:95e9, lps:480e6},
+            {n:"Bio-Eng Center", i:"🧬", c:600e9, lps:2.8e9},
+            {n:"Fusion Reactor", i:"☢️", c:4.5e12, lps:18e9},
+            {n:"Global Bank", i:"🏦", c:35e12, lps:140e9},
+            {n:"Moon Drilling", i:"🌑", c:280e12, lps:950e9},
+            {n:"Mars Colony", i:"🚀", c:2.1e15, lps:8.5e12},
+            {n:"Asteroid Mining", i:"☄️", c:18e15, lps:65e12},
+            {n:"Dyson Swarm", i:"☀️", c:150e15, lps:480e12},
+            {n:"Galaxy Trade", i:"🌌", c:1.2e18, lps:3.5e15},
+            {n:"Wormhole Hub", i:"🕳️", c:15e18, lps:42e15},
+            {n:"Time Agency", i:"⏳", c:180e18, lps:550e15},
+            {n:"Dimension Lab", i:"🔮", c:1.5e21, lps:4.1e18},
+            {n:"Void Harvester", i:"🌑", c:12e21, lps:38e18},
+            {n:"Matrix Server", i:"💾", c:95e21, lps:290e18},
+            {n:"God Protocol", i:"✨", c:1.5e24, lps:4.5e21},
+            {n:"Reality Editor", i:"🎨", c:18e24, lps:52e21},
+            {n:"Singularity", i:"👁️", c:150e24, lps:480e21}
+        ],
+        lux: [
+            {n:"Golden Watch", i:"⌚", c:50000},
+            {n:"Designer Suit", i:"👔", c:250000},
+            {n:"Supercar", i:"🏎️", c:1.5e6},
+            {n:"Luxury Jet", i:"🛩️", c:25e6},
+            {n:"Ocean Villa", i:"🏖️", c:180e6},
+            {n:"Skyscraper", i:"🏙️", c:1.2e9},
+            {n:"Private Island", i:"🏝️", c:8.5e9},
+            {n:"Space Yacht", i:"🛸", c:45e9},
+            {n:"Diamond Palace", i:"💎", c:280e9},
+            {n:"Moon Estate", i:"🌑", c:1.5e12},
+            {n:"Mars Valley", i:"🚀", c:12e12},
+            {n:"Private Star", i:"⭐", c:180e12},
+            {n:"Golden Fleet", i:"🚢", c:1.2e15},
+            {n:"Army Group", i:"🪖", c:15e15},
+            {n:"Nation State", i:"🗺️", c:250e15},
+            {n:"Orbital Ring", i:"💍", c:1.8e18},
+            {n:"Planetary Core", i:"🌎", c:15e18},
+            {n:"Nebula Cloud", i:"☁️", c:120e18},
+            {n:"Galaxy Core", i:"🌀", c:1.5e21},
+            {n:"The Universe", i:"🌌", c:100e21}
+        ],
+        skins: ["🦙","🐱","🐶","🦊","🦁","🦁","🐯","🐮","🐽","🐨","🐻","🦊","🦄","🦖","🐲","👾","🤖","👻","🤡","🗿","👽","🧙","🧞","💂","👩‍🔬","🦸","👑","💎","🌈","🔥"]
     };
 
     let state = {
-        cash: 0, total: 0, 
-        biz: {}, lux: [], ach: [], 
-        skin: '🦙', legacy: 0,
-        name: localStorage.getItem('llama_name') || 'Res_' + Math.random().toString(36).substr(2,4)
+        cash: 0, total: 0,
+        biz: {}, lux: [], ach: [],
+        skin: "🦙", legacy: 0,
+        rage: 0, lastClick: 0
     };
-    localStorage.setItem('llama_name', state.name);
 
-    // --- ЛОГИКА ---
+    // --- NAVIGATION ---
+    window.addEventListener('keydown', (e) => {
+        if(e.key === 'ArrowRight') window.location.href = 'corp.html';
+        if(e.key === 'ArrowLeft') window.location.href = 'country.html';
+        if(e.key === '`') document.getElementById('panic-overlay').style.display = 'flex';
+    });
+
+    document.getElementById('panic-input').addEventListener('input', (e) => {
+        if(e.target.value.toLowerCase() === 'llama') {
+            document.getElementById('panic-overlay').style.display = 'none';
+            e.target.value = '';
+        }
+    });
+
+    // --- GAME ENGINE ---
     function init() {
-        const saved = localStorage.getItem('llama_v4_main');
-        if(saved) Object.assign(state, JSON.parse(saved));
-        
-        document.getElementById('llama-target').innerText = state.skin;
+        let saved = localStorage.getItem('stanford_v5_save');
+        if(saved) state = Object.assign(state, JSON.parse(saved));
         renderAll();
-        setInterval(() => {
-            let lps = getLPS();
-            state.cash += lps/10; state.total += lps/10;
-            checkAchs();
-            updateUI();
-        }, 100);
-        setInterval(syncCloud, 20000);
+        setInterval(tick, 100);
     }
 
-    function hit(e) {
-        let pwr = (1 + state.legacy) * (1 + (state.ach.length * 0.05));
-        state.cash += pwr; state.total += pwr;
+    function tick() {
+        let lps = getLPS();
+        state.cash += lps/10; state.total += lps/10;
+        if(state.rage > 0) {
+            state.rage = Math.max(0, state.rage - 0.05);
+            if(state.rage < 2) stopRage();
+        }
         updateUI();
+    }
+
+    function tap(e) {
+        let now = Date.now();
+        if(now - state.lastClick < 150) state.rage += 0.2;
+        else state.rage = Math.max(0, state.rage - 0.3);
+        state.lastClick = now;
+
+        let bonus = 1 + (state.ach.length * 0.05);
+        let clickVal = (1 + state.legacy) * bonus;
+        
+        if(state.rage >= 2.5) {
+            clickVal *= 5;
+            startRage();
+        }
+
+        state.cash += clickVal; state.total += clickVal;
+        spawnText(e.clientX, e.clientY, `+${format(clickVal)}`);
+        updateUI();
+    }
+
+    function startRage() {
+        document.getElementById('game-body').classList.add('rage-active');
+        document.getElementById('rage-ui').style.display = 'inline';
+    }
+    function stopRage() {
+        document.getElementById('game-body').classList.remove('rage-active');
+        document.getElementById('rage-ui').style.display = 'none';
     }
 
     function getLPS() {
         let inc = 0;
-        DB.biz.forEach(b => inc += (state.biz[b.id] || 0) * b.lps);
+        DB.biz.forEach((b, i) => inc += (state.biz['b'+i] || 0) * b.lps);
         return inc * (1 + (state.ach.length * 0.05));
-    }
-
-    function checkAchs() {
-        DB.achs.forEach(a => {
-            if(!state.ach.includes(a.id)) {
-                let ready = a.pre ? state.ach.includes(a.pre) : true;
-                if(state.total >= a.req && ready) {
-                    state.ach.push(a.id);
-                    renderTree();
-                }
-            }
-        });
     }
 
     function updateUI() {
         document.getElementById('score').innerText = format(state.cash);
         document.getElementById('lps-val').innerText = format(getLPS());
-        document.getElementById('bonus-val').innerText = state.ach.length * 5;
-        document.getElementById('leg-info').innerText = "Next Legacy Level at: " + format(Math.pow(10, 5 + state.legacy));
+        document.getElementById('click-val').innerText = (1 + state.legacy).toFixed(1);
+        document.getElementById('llama-main').innerText = state.skin;
+        
+        let leg = Math.max(0, Math.floor(Math.log10(state.total / 1e6)));
+        document.getElementById('leg-avail').innerText = `Available: +${leg}`;
         save();
     }
 
     // --- RENDERING ---
     function renderAll() {
-        renderBiz(); renderLux(); renderTree(); renderSkins(); fetchRank();
+        renderBiz(); renderLux(); renderSkins(); renderTree();
     }
 
     function renderBiz() {
         const list = document.getElementById('biz-list');
-        list.innerHTML = DB.biz.map(b => {
-            let lvl = state.biz[b.id] || 0;
-            let cost = Math.floor(b.c * Math.pow(1.4, lvl));
-            let locked = (b.c > 1e9 && state.total < b.c / 2);
-            return `<div class="item-card ${state.cash < cost || locked ? 'locked' : ''}" onclick="buyBiz('${b.id}', ${cost})">
-                <div class="icon">${locked ? '❓' : b.i}</div>
-                <div style="flex:1"><b>${locked ? 'Classified' : b.n}</b><br><small>${format(cost)}</small></div>
-                <div style="color:var(--gold)">Lv ${lvl}</div>
+        list.innerHTML = DB.biz.map((b, i) => {
+            let lvl = state.biz['b'+i] || 0;
+            let cost = Math.floor(b.c * Math.pow(1.5, lvl));
+            let locked = (b.c > 1e12 && state.total < b.c / 5);
+            return `<div class="card ${state.cash < cost || locked ? 'locked' : ''}" onclick="buyBiz(${i}, ${cost})">
+                <div class="b-icon">${locked ? '🔒' : b.i}</div>
+                <div class="b-info"><b>${locked ? 'CLASSIFIED' : b.n}</b><small>${format(cost)}</small></div>
+                <div class="b-lvl">${lvl}</div>
             </div>`;
         }).join('');
     }
 
     function renderLux() {
         const list = document.getElementById('lux-list');
-        list.innerHTML = DB.lux.map(l => {
-            let owned = state.lux.includes(l.id);
-            return `<div class="item-card ${state.cash < l.c && !owned ? 'locked' : ''}" onclick="buyLux('${l.id}', ${l.c})">
-                <div class="icon">${l.i}</div>
-                <div style="flex:1"><b>${l.n}</b><br><small>${format(l.c)}</small></div>
-                <div style="color:var(--neon)">${owned ? 'OWNED' : 'BUY'}</div>
+        list.innerHTML = DB.lux.map((l, i) => {
+            let owned = state.lux.includes(i);
+            return `<div class="card ${state.cash < l.c && !owned ? 'locked' : ''}" onclick="buyLux(${i}, ${l.c})">
+                <div class="b-icon">${l.i}</div>
+                <div class="b-info"><b>${l.n}</b><small>${format(l.c)}</small></div>
+                <div class="b-lvl">${owned ? '✓' : ''}</div>
             </div>`;
         }).join('');
     }
 
     function renderSkins() {
-        const grid = document.getElementById('skins-grid');
-        grid.innerHTML = DB.skins.map(s => `
-            <div class="item-card" onclick="setSkin('${s.char}', ${s.c})">
-                <div class="icon">${s.char}</div>
-                <div style="flex:1"><b>${s.n}</b><br><small>${format(s.c)}</small></div>
+        const list = document.getElementById('skin-list');
+        list.innerHTML = DB.skins.map((s, i) => `
+            <div class="card" onclick="setSkin('${s}', ${i * 1e6})">
+                <div class="b-icon">${s}</div>
+                <div class="b-info"><b>Skin #${i}</b><small>${format(i * 1e6)} total</small></div>
             </div>
         `).join('');
     }
 
     function renderTree() {
-        document.getElementById('tree-list').innerHTML = DB.achs.map(a => `
-            <div class="item-card ${state.ach.includes(a.id) ? '' : 'locked'}">
-                <div class="icon">🏆</div>
-                <div><b>${a.n}</b><br><small>${format(a.req)}</small></div>
-            </div>
+        const tree = document.getElementById('tree-list');
+        tree.innerHTML = `<div class="card"><b>Total Research Path</b><br><small>Unlock achievements by earning more</small></div>` + 
+        [1e3, 1e6, 1e9, 1e12, 1e15, 1e18, 1e21, 1e24].map(req => `
+            <div class="card ${state.total >= req ? '' : 'locked'}">🏆 Milestone: ${format(req)}</div>
         `).join('');
     }
 
     // --- ACTIONS ---
-    window.buyBiz = (id, c) => { if(state.cash >= c) { state.cash -= c; state.biz[id] = (state.biz[id] || 0) + 1; renderBiz(); } };
-    window.buyLux = (id, c) => { if(state.cash >= c && !state.lux.includes(id)) { state.cash -= c; state.lux.push(id); renderLux(); } };
-    window.setSkin = (char, c) => { if(state.total >= c) { state.skin = char; document.getElementById('llama-target').innerText = char; } };
+    window.buyBiz = (idx, c) => { if(state.cash >= c) { state.cash -= c; state.biz['b'+idx] = (state.biz['b'+idx] || 0) + 1; renderBiz(); }};
+    window.buyLux = (idx, c) => { if(state.cash >= c && !state.lux.includes(idx)) { state.cash -= c; state.lux.push(idx); renderLux(); }};
+    window.setSkin = (s, req) => { if(state.total >= req) { state.skin = s; updateUI(); }};
     
     window.prestige = () => {
-        let req = Math.pow(10, 5 + state.legacy);
-        if(state.total >= req && confirm("Ascend? All except achievements and legacy will reset.")) {
-            state.legacy++; state.cash = 0; state.total = 0; state.biz = {}; state.lux = [];
+        let leg = Math.max(0, Math.floor(Math.log10(state.total / 1e6)));
+        if(leg > 0 && confirm("Ascend? All research will reset but Power remains.")) {
+            state.legacy += leg; state.cash = 0; state.total = 0; state.biz = {}; state.lux = [];
             save(); location.reload();
         }
     };
 
-    // --- SYSTEM ---
+    function playSlots() {
+        if(state.score < 2000) return;
+        state.cash -= 2000;
+        const syms = ["🦙","💎","7️⃣","🍒","🔥"];
+        let res = [syms[Math.floor(Math.random()*5)], syms[Math.floor(Math.random()*5)], syms[Math.floor(Math.random()*5)]];
+        document.getElementById('slot-res').innerText = res.join(" ");
+        if(res[0] === res[1] && res[1] === res[2]) { state.cash += 50000; showNotif("JACKPOT!", "🎰"); }
+    }
+
+    // --- UTILS ---
     function format(n) {
         if(n < 1000) return Math.floor(n);
         let e = Math.floor(Math.log10(n)/3);
-        return (n/Math.pow(1000,e)).toFixed(2) + ["","K","M","B","T","Q","Sx"][e];
+        let s = ["","K","M","B","T","Q","Qi","Sx","Sp","Oc","No","Dc"];
+        return (n/Math.pow(1000,e)).toFixed(2) + s[e];
     }
     function tab(side, id) {
-        const container = document.getElementById(id).parentElement;
-        container.querySelectorAll('.content').forEach(c => c.classList.remove('active'));
-        container.parentElement.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+        const p = document.getElementById(id).parentElement;
+        p.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+        p.parentElement.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
         document.getElementById(id).classList.add('active');
         event.currentTarget.classList.add('active');
     }
-    function save() { localStorage.setItem('llama_v4_main', JSON.stringify(state)); }
-
-    // Mask Input
-    document.getElementById('mask-input').oninput = (e) => { if(e.target.value === 'llama') { document.getElementById('mask').style.display='none'; e.target.value=''; } };
-    window.onkeydown = e => { if(e.key === '`') document.getElementById('mask').style.display='flex'; };
-
-    // Fake Rank (Cloud placeholder)
-    async function fetchRank() {
-        document.getElementById('rank-list').innerHTML = `<div class="l-row me"><span>#1 ${state.name}</span><span>${format(state.total)}</span></div>` + 
-        Array.from({length:9}, (_,i)=>`<div class="l-row"><span>#${i+2} Researcher_${i}</span><span>${format(state.total/(i+2))}</span></div>`).join('');
+    function spawnText(x, y, t) {
+        const d = document.createElement('div'); d.className = 'float-text'; d.style.left = x+'px'; d.style.top = y+'px';
+        d.style.color = state.rage >= 2.5 ? 'var(--accent)' : 'var(--neon)'; d.innerText = t; document.body.appendChild(d);
+        setTimeout(() => d.remove(), 600);
     }
+    function showNotif(t, i) {
+        document.getElementById('n-title').innerText = t; document.getElementById('n-icon').innerText = i;
+        const n = document.getElementById('notif'); n.classList.add('show');
+        setTimeout(() => n.classList.remove('show'), 3000);
+    }
+    function save() { localStorage.setItem('stanford_v5_save', JSON.stringify(state)); }
 
-    window.onload = init;
+    init();
 </script>
 </body>
 </html>
