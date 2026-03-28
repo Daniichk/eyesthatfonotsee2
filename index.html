@@ -3,63 +3,72 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Stanford Neural Link: Project LLAMA</title>
+    <title>Stanford Neural Link: Project LLAMA [RETRO OS]</title>
     <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Inter:wght@300;400;700;900&display=swap" rel="stylesheet">
     <style>
         :root {
-            --neon: #00ffcc; --accent: #ff0055; --gold: #ffd700; --bg: #030305;
-            --glass: rgba(10, 10, 18, 0.95); --border: rgba(0, 255, 204, 0.15);
+            --neon: #00ffcc; --accent: #ff0055; --gold: #ffd700; --bg: #020202;
+            --glass: rgba(10, 15, 10, 0.85); --border: rgba(0, 255, 204, 0.3);
             --st-red: #8c1515;
+            --terminal-green: #33ff33;
         }
         body {
-            margin: 0; background: var(--bg); color: white; font-family: 'Inter', sans-serif;
+            margin: 0; background: var(--bg); color: #e0e0e0; font-family: 'Inter', sans-serif;
             overflow: hidden; height: 100vh; display: flex; flex-direction: column;
-            background-image: radial-gradient(circle at 50% 0%, #1a0a2e 0%, var(--bg) 70%);
+            background-image: radial-gradient(circle at 50% 50%, #0a1510 0%, var(--bg) 90%);
+        }
+
+        /* RETRO CRT SCANLINES EFFECT */
+        .scanlines {
+            position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+            background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%);
+            background-size: 100% 4px; z-index: 9999; pointer-events: none;
+            opacity: 0.6;
         }
 
         /* Panic Mask */
         #panic-overlay {
-            display: none; position: fixed; inset: 0; background: white; z-index: 999999;
-            flex-direction: column; align-items: center; justify-content: center; color: #333;
+            display: none; position: fixed; inset: 0; background: #000; z-index: 999999;
+            flex-direction: column; align-items: flex-start; justify-content: flex-start; color: var(--terminal-green);
+            font-family: 'Courier New', Courier, monospace; padding: 20px;
         }
 
         /* Rage Animation */
         @keyframes shake {
             0% { transform: translate(0,0); }
-            25% { transform: translate(-2px, 2px); filter: hue-rotate(10deg); }
-            50% { transform: translate(2px, -2px); }
+            25% { transform: translate(-3px, 3px); filter: hue-rotate(15deg) contrast(1.5); }
+            50% { transform: translate(3px, -3px); }
             100% { transform: translate(0,0); }
         }
-        .rage-active { animation: shake 0.05s infinite; border: 2px solid var(--accent) !important; }
+        .rage-active { animation: shake 0.05s infinite; border: 2px solid var(--accent) !important; box-shadow: inset 0 0 50px rgba(255,0,85,0.3); }
 
         header { 
-            padding: 20px; text-align: center; border-bottom: 1px solid var(--border); 
-            background: rgba(0,0,0,0.6); backdrop-filter: blur(10px);
+            padding: 15px; text-align: center; border-bottom: 2px solid var(--border); 
+            background: rgba(0,20,0,0.8); text-shadow: 0 0 5px var(--terminal-green);
         }
         #score {
             font-family: 'Orbitron'; font-size: 3.5rem; margin: 0; font-weight: 900;
-            background: linear-gradient(180deg, #fff 30%, var(--neon));
-            -webkit-background-clip: text; -webkit-text-fill-color: transparent;
-            filter: drop-shadow(0 0 15px rgba(0, 255, 204, 0.4));
+            color: var(--neon); text-shadow: 0 0 10px var(--neon), 0 0 20px var(--neon);
         }
 
         .main-grid {
-            display: grid; grid-template-columns: 380px 1fr 380px; gap: 20px;
-            padding: 20px; height: calc(100vh - 150px); box-sizing: border-box;
+            display: grid; grid-template-columns: 380px 1fr 380px; gap: 15px;
+            padding: 15px; height: calc(100vh - 140px); box-sizing: border-box;
+            position: relative; z-index: 10;
         }
 
         .panel { 
-            background: var(--glass); border: 1px solid var(--border); border-radius: 24px; 
+            background: var(--glass); border: 2px solid var(--border); border-radius: 8px; 
             display: flex; flex-direction: column; overflow: hidden;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            box-shadow: inset 0 0 15px rgba(0,255,204,0.05);
         }
-        .tab-nav { display: flex; background: rgba(0,0,0,0.8); padding: 5px; gap: 5px; }
+        .tab-nav { display: flex; background: #000; border-bottom: 2px solid var(--border); }
         .tab-btn { 
-            flex: 1; padding: 12px; background: none; border: none; color: #555; 
-            font-family: 'Orbitron'; font-size: 0.6rem; cursor: pointer; transition: 0.3s; 
-            border-radius: 15px; font-weight: 900;
+            flex: 1; padding: 12px; background: none; border: none; color: #447744; 
+            font-family: 'Orbitron'; font-size: 0.65rem; cursor: pointer; transition: 0.2s; 
+            font-weight: 900; text-transform: uppercase;
         }
-        .tab-btn.active { color: var(--neon); background: rgba(0,255,204,0.1); box-shadow: 0 0 15px rgba(0,255,204,0.1); }
+        .tab-btn.active { color: var(--neon); background: rgba(0,255,204,0.15); box-shadow: inset 0 -3px 0 var(--neon); text-shadow: 0 0 5px var(--neon); }
         
         .tab-content { display: none; padding: 15px; overflow-y: auto; flex: 1; scrollbar-width: none; }
         .tab-content.active { display: block; }
@@ -68,62 +77,76 @@
         #stage { display: flex; flex-direction: column; justify-content: center; align-items: center; position: relative; }
         #llama-main { 
             font-size: 160px; cursor: pointer; user-select: none; transition: transform 0.05s; z-index: 5;
-            filter: drop-shadow(0 0 30px rgba(0, 255, 204, 0.2));
+            filter: drop-shadow(0 0 20px rgba(0, 255, 204, 0.3));
         }
-        #llama-main:active { transform: scale(0.92); }
+        #llama-main:active { transform: scale(0.9); filter: brightness(1.5) drop-shadow(0 0 40px var(--neon)); }
 
         /* Cards Design */
         .card { 
-            background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08); 
-            border-radius: 16px; padding: 12px; margin-bottom: 10px; display: flex; 
-            align-items: center; cursor: pointer; transition: 0.2s;
+            background: #050a08; border: 1px solid rgba(0,255,204,0.2); 
+            border-radius: 6px; padding: 10px; margin-bottom: 8px; display: flex; 
+            align-items: center; cursor: pointer; transition: 0.1s;
         }
-        .card:hover { 
-            border-color: var(--neon); background: rgba(0,255,204,0.08);
-            transform: translateX(5px);
-        }
-        .card.locked { opacity: 0.15; filter: grayscale(1); pointer-events: none; }
-        .b-icon { font-size: 2rem; margin-right: 15px; width: 40px; text-align: center; }
+        .card:hover { border-color: var(--neon); background: rgba(0,255,204,0.1); transform: translateX(3px); }
+        .card.locked { opacity: 0.3; filter: grayscale(1); pointer-events: none; border-color: #333; }
+        .b-icon { font-size: 1.8rem; margin-right: 12px; width: 35px; text-align: center; }
         .b-info { flex: 1; }
-        .b-info b { display: block; font-family: 'Orbitron'; color: var(--neon); font-size: 0.85rem; letter-spacing: 1px; }
-        .b-info small { color: #888; font-size: 0.7rem; }
+        .b-info b { display: block; font-family: 'Orbitron'; color: var(--neon); font-size: 0.8rem; }
+        .b-info small { color: #5aa; font-size: 0.7rem; font-family: 'Courier New', Courier, monospace; }
         .b-lvl { color: var(--gold); font-family: 'Orbitron'; font-size: 0.8rem; font-weight: 900; }
+
+        /* Casino Styles */
+        .game-box { background: rgba(0,0,0,0.5); border: 1px dashed var(--border); border-radius: 8px; padding: 10px; margin-bottom: 15px; }
+        .btn { background: var(--neon); color: #000; border: none; padding: 10px; border-radius: 4px; font-weight: 900; font-family: 'Orbitron'; cursor: pointer; width: 100%; font-size: 0.75rem; margin-top: 5px; text-transform: uppercase; transition: 0.2s; }
+        .btn:hover { filter: brightness(1.2); }
+        .btn:active { transform: scale(0.95); }
+        
+        .slots-row { display: flex; justify-content: center; gap: 8px; margin: 10px 0; }
+        .slot-item { background: #000; width: 50px; height: 50px; display: flex; align-items: center; justify-content: center; border-radius: 6px; border: 1px solid var(--border); font-size: 1.8rem; text-shadow: none; }
+        
+        .mines-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 5px; margin: 10px 0; }
+        .mine-cell { background: #0a0a0a; height: 45px; border-radius: 4px; display: flex; align-items: center; justify-content: center; cursor: pointer; border: 1px solid #222; font-size: 1.2rem; }
+        .mine-cell:hover { background: #111; border-color: var(--neon); }
 
         /* Floating Nav Info */
         .nav-hint { 
-            position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%);
-            font-family: 'Orbitron'; font-size: 0.6rem; color: #444; letter-spacing: 2px;
+            position: fixed; bottom: 15px; left: 50%; transform: translateX(-50%);
+            font-family: 'Orbitron'; font-size: 0.6rem; color: #383; letter-spacing: 2px;
+            text-shadow: 0 0 3px #0f0; z-index: 10;
         }
 
         #notif { 
             position: fixed; top: -100px; left: 50%; transform: translateX(-50%); 
-            background: #000; border: 1px solid var(--gold); padding: 15px 30px; 
-            border-radius: 15px; z-index: 10000; transition: 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-            display: flex; align-items: center; gap: 15px; box-shadow: 0 0 30px rgba(255,215,0,0.2);
+            background: #000; border: 2px solid var(--gold); padding: 12px 25px; 
+            border-radius: 8px; z-index: 10000; transition: 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            display: flex; align-items: center; gap: 15px; box-shadow: 0 0 20px rgba(255,215,0,0.3);
+            font-family: 'Orbitron';
         }
-        #notif.show { top: 30px; }
+        #notif.show { top: 20px; }
         
-        .float-text { position: fixed; font-family: 'Orbitron'; font-weight: 900; pointer-events: none; animation: floatUp 0.6s ease-out forwards; z-index: 1000; font-size: 1.2rem; }
-        @keyframes floatUp { 0% { opacity: 1; transform: translateY(0) scale(1.2); } 100% { opacity: 0; transform: translateY(-100px) scale(0.8); } }
+        .float-text { position: fixed; font-family: 'Orbitron'; font-weight: 900; pointer-events: none; animation: floatUp 0.6s ease-out forwards; z-index: 1000; font-size: 1.2rem; text-shadow: 0 0 5px var(--neon); }
+        @keyframes floatUp { 0% { opacity: 1; transform: translateY(0) scale(1.2); } 100% { opacity: 0; transform: translateY(-80px) scale(0.8); } }
     </style>
 </head>
 <body id="game-body">
 
+<div class="scanlines"></div>
+
 <div id="panic-overlay">
-    <h1 style="color:var(--st-red); font-family: serif; font-size: 3rem;">Stanford University</h1>
-    <p>Research Data Entry Terminal - Section 8</p>
-    <p>Enter 'llama' to unlock</p>
-    <input type="password" id="panic-input" style="padding: 10px; border: 1px solid #ccc;">
+    <h2>STANFORD OS v1.0.4</h2>
+    <p>> Root access required.</p>
+    <p>> Terminal locked. Input key:</p>
+    <input type="text" id="panic-input" style="background:transparent; border:none; border-bottom:1px solid #3f3; color:#3f3; outline:none; font-family:monospace; font-size:1.2rem;" autofocus autocomplete="off">
 </div>
 
-<div id="notif"><span id="n-icon" style="font-size:1.5rem">🏆</span> <div><b id="n-title" style="color:var(--gold)">ACHIEVEMENT</b><br><small id="n-desc">Research milestone reached</small></div></div>
+<div id="notif"><span id="n-icon" style="font-size:1.5rem">🏆</span> <div><b id="n-title" style="color:var(--gold)">ACHIEVEMENT</b><br><small id="n-desc" style="color:#aaa;">Milestone reached</small></div></div>
 
 <header>
-    <div style="font-family:'Orbitron'; font-size:0.6rem; color:#666; letter-spacing: 3px;">NEURAL INTERFACE: <span id="rank-name" style="color:var(--gold)">STAGIERE</span></div>
+    <div style="font-family:'Orbitron'; font-size:0.6rem; color:#6a6; letter-spacing: 3px;">USER: <span id="rank-name" style="color:var(--gold)">STAGIERE</span></div>
     <h1 id="score">0</h1>
     <div style="font-family:'Orbitron'; font-size:0.8rem; color:var(--neon)">
-        LPS: <span id="lps-val">0</span> | POWER: x<span id="click-val">1.0</span>
-        <span id="rage-ui" style="color:var(--accent); display:none; margin-left:10px;">[ RAGE MODE ACTIVE ]</span>
+        LPS: <span id="lps-val">0</span> | PWR: x<span id="click-val">1.0</span>
+        <span id="rage-ui" style="color:var(--accent); display:none; margin-left:10px; text-shadow: 0 0 5px red;">[ OVERLOAD ]</span>
     </div>
 </header>
 
@@ -131,26 +154,49 @@
     <div class="panel">
         <div class="tab-nav">
             <button class="tab-btn active" onclick="tab('L', 't-tree')">🌳 TREE</button>
-            <button class="tab-btn" onclick="tab('L', 't-legacy')">✨ FLEECE</button>
+            <button class="tab-btn" onclick="tab('L', 't-legacy')">✨ ASCEND</button>
             <button class="tab-btn" onclick="tab('L', 't-casino')">🎰 RISK</button>
         </div>
+        
         <div id="t-tree" class="tab-content active"><div id="tree-list"></div></div>
+        
         <div id="t-legacy" class="tab-content">
-            <h2 style="color:var(--gold); font-family:'Orbitron';">Legacy Ascension</h2>
-            <p style="font-size:0.8rem; color:#888;">Сбросьте всё, чтобы получить <b>Золотое Руно</b>. Каждый уровень даёт +100% к силе клика навсегда.</p>
-            <div id="leg-avail" style="font-size:1.2rem; color:var(--neon); margin:20px 0;">Available: +0</div>
-            <button class="card" style="width:100%; justify-content:center; background:var(--gold); color:black; font-weight:900;" onclick="prestige()">ASCEND NOW</button>
+            <h2 style="color:var(--gold); font-family:'Orbitron';">Legacy Protocol</h2>
+            <p style="font-size:0.8rem; color:#888;">Сбросьте систему. Вы получите <b>Золотое Руно</b>. Каждый уровень даёт +100% к силе клика навсегда.</p>
+            <div id="leg-avail" style="font-size:1.2rem; color:var(--neon); margin:20px 0; font-family:'Orbitron'">Available: +0</div>
+            <button class="btn" style="background:var(--gold); color:black;" onclick="prestige()">ASCEND NOW</button>
         </div>
+        
         <div id="t-casino" class="tab-content">
-            <p style="color:var(--gold); font-size:0.7rem;">RESEARCH FUNDING GAMBLE</p>
-            <div class="card" onclick="playSlots()"><b>🎰 SLOTS</b><small style="margin-left:10px;">(2k per spin)</small></div>
-            <div id="slot-res" style="text-align:center; font-size:2rem; letter-spacing:5px;">💎 💎 💎</div>
+            <p style="color:var(--gold); font-size:0.7rem; font-family:'Orbitron';">UNAUTHORIZED GAMBLING PORTAL</p>
+            
+            <div class="game-box">
+                <b style="color:var(--gold); font-family:'Orbitron';">🎰 NEURAL SLOTS</b>
+                <div class="slots-row"><div class="slot-item" id="sl1">💎</div><div class="slot-item" id="sl2">💎</div><div class="slot-item" id="sl3">💎</div></div>
+                <button class="btn" onclick="playSlots()">SPIN (-2,000)</button>
+            </div>
+            
+            <div class="game-box">
+                <div style="display:flex; justify-content:space-between; font-family:'Orbitron';"><b>💣 DATA MINES</b> <span id="m-mult" style="color:var(--neon)">x1.0</span></div>
+                <div class="mines-grid" id="m-grid"></div>
+                <button id="m-start" class="btn" onclick="startMines()">STAKE (-5,000)</button>
+                <button id="m-cash" class="btn" style="display:none; background:var(--gold)" onclick="cashMines()">CASH OUT</button>
+            </div>
+            
+            <div class="game-box">
+                <b style="font-family:'Orbitron';">🔴 ROULETTE</b>
+                <div id="r-res" style="text-align:center; padding:10px; border:1px solid var(--border); margin:5px 0; font-family:'Orbitron'; background:#000;">READY</div>
+                <div style="display:grid; grid-template-columns:1fr 1fr; gap:5px;">
+                    <button class="btn" style="background:#ff0055; color:white" onclick="playRoulette('red')">RED</button>
+                    <button class="btn" style="background:#222; color:white; border: 1px solid #444;" onclick="playRoulette('black')">BLACK</button>
+                </div>
+            </div>
         </div>
     </div>
 
     <div id="stage">
         <div id="llama-main" onclick="tap(event)">🦙</div>
-        <div style="margin-top:30px; font-family:'Orbitron'; font-size:0.7rem; color:#444;" id="skin-label">STANDARD_UNIT_01</div>
+        <div style="margin-top:30px; font-family:'Orbitron'; font-size:0.7rem; color:#4a4;" id="skin-label">UNIT: ALPHACA-01</div>
     </div>
 
     <div class="panel">
@@ -165,7 +211,7 @@
     </div>
 </div>
 
-<div class="nav-hint">USE [ ← ] [ → ] TO NAVIGATE RESEARCH SECTORS</div>
+<div class="nav-hint">PRESS [ SPACE ] TO CLICK | [ ← ] [ → ] TO NAVIGATE SECTORS</div>
 
 <script>
     // --- DATABASE (30 BIZ, 20 LUX, 30 SKINS) ---
@@ -224,7 +270,7 @@
             {n:"Galaxy Core", i:"🌀", c:1.5e21},
             {n:"The Universe", i:"🌌", c:100e21}
         ],
-        skins: ["🦙","🐱","🐶","🦊","🦁","🦁","🐯","🐮","🐽","🐨","🐻","🦊","🦄","🦖","🐲","👾","🤖","👻","🤡","🗿","👽","🧙","🧞","💂","👩‍🔬","🦸","👑","💎","🌈","🔥"]
+        skins: ["🦙","🐱","🐶","🦊","🦁","🐯","🐮","🐽","🐨","🐻","🐼","🦄","🦖","🐲","👾","🤖","👻","🤡","🗿","👽","🧙","🧞","💂","👩‍🔬","🦸","👑","💎","🌈","🔥","⚡"]
     };
 
     let state = {
@@ -234,11 +280,21 @@
         rage: 0, lastClick: 0
     };
 
-    // --- NAVIGATION ---
+    // --- NAVIGATION & HOTKEYS ---
     window.addEventListener('keydown', (e) => {
+        // Убрали баг с зажатием: срабатывает только 1 раз при нажатии
+        if(e.code === 'Space') {
+            e.preventDefault();
+            if(e.repeat) return; 
+            
+            // Центр экрана для текста при клике пробелом
+            let rect = document.getElementById('llama-main').getBoundingClientRect();
+            tap({ clientX: rect.left + rect.width / 2, clientY: rect.top + rect.height / 2 });
+        }
+        
         if(e.key === 'ArrowRight') window.location.href = 'corp.html';
         if(e.key === 'ArrowLeft') window.location.href = 'country.html';
-        if(e.key === '`') document.getElementById('panic-overlay').style.display = 'flex';
+        if(e.key === '`') { document.getElementById('panic-overlay').style.display = 'flex'; document.getElementById('panic-input').focus(); }
     });
 
     document.getElementById('panic-input').addEventListener('input', (e) => {
@@ -282,6 +338,12 @@
 
         state.cash += clickVal; state.total += clickVal;
         spawnText(e.clientX, e.clientY, `+${format(clickVal)}`);
+        
+        // Анимация масштаба
+        let img = document.getElementById('llama-main');
+        img.style.transform = 'scale(0.9)';
+        setTimeout(() => img.style.transform = 'scale(1)', 50);
+        
         updateUI();
     }
 
@@ -324,8 +386,8 @@
             let locked = (b.c > 1e12 && state.total < b.c / 5);
             return `<div class="card ${state.cash < cost || locked ? 'locked' : ''}" onclick="buyBiz(${i}, ${cost})">
                 <div class="b-icon">${locked ? '🔒' : b.i}</div>
-                <div class="b-info"><b>${locked ? 'CLASSIFIED' : b.n}</b><small>${format(cost)}</small></div>
-                <div class="b-lvl">${lvl}</div>
+                <div class="b-info"><b>${locked ? 'CLASSIFIED' : b.n}</b><small>Cost: ${format(cost)}</small></div>
+                <div class="b-lvl">Lv ${lvl}</div>
             </div>`;
         }).join('');
     }
@@ -336,8 +398,8 @@
             let owned = state.lux.includes(i);
             return `<div class="card ${state.cash < l.c && !owned ? 'locked' : ''}" onclick="buyLux(${i}, ${l.c})">
                 <div class="b-icon">${l.i}</div>
-                <div class="b-info"><b>${l.n}</b><small>${format(l.c)}</small></div>
-                <div class="b-lvl">${owned ? '✓' : ''}</div>
+                <div class="b-info"><b>${l.n}</b><small>Cost: ${format(l.c)}</small></div>
+                <div class="b-lvl" style="color:${owned ? 'var(--neon)' : 'var(--gold)'}">${owned ? 'OWNED ✓' : ''}</div>
             </div>`;
         }).join('');
     }
@@ -347,7 +409,7 @@
         list.innerHTML = DB.skins.map((s, i) => `
             <div class="card" onclick="setSkin('${s}', ${i * 1e6})">
                 <div class="b-icon">${s}</div>
-                <div class="b-info"><b>Skin #${i}</b><small>${format(i * 1e6)} total</small></div>
+                <div class="b-info"><b>Skin Code: 0x0${i}</b><small>Unlock: ${format(i * 1e6)} total</small></div>
             </div>
         `).join('');
     }
@@ -367,19 +429,100 @@
     
     window.prestige = () => {
         let leg = Math.max(0, Math.floor(Math.log10(state.total / 1e6)));
-        if(leg > 0 && confirm("Ascend? All research will reset but Power remains.")) {
+        if(leg > 0 && confirm("WARNING: Ascension will format C: drive (Reset Biz/Cash). Power remains. Continue?")) {
             state.legacy += leg; state.cash = 0; state.total = 0; state.biz = {}; state.lux = [];
             save(); location.reload();
         }
     };
 
+    // --- CASINO LOGIC (FIXED) ---
     function playSlots() {
-        if(state.score < 2000) return;
+        if(state.cash < 2000) return; // FIX: Protect against negative money
         state.cash -= 2000;
+        updateUI();
         const syms = ["🦙","💎","7️⃣","🍒","🔥"];
-        let res = [syms[Math.floor(Math.random()*5)], syms[Math.floor(Math.random()*5)], syms[Math.floor(Math.random()*5)]];
-        document.getElementById('slot-res').innerText = res.join(" ");
-        if(res[0] === res[1] && res[1] === res[2]) { state.cash += 50000; showNotif("JACKPOT!", "🎰"); }
+        let t = 0;
+        let iv = setInterval(() => {
+            document.getElementById('sl1').innerText = syms[Math.floor(Math.random()*5)];
+            document.getElementById('sl2').innerText = syms[Math.floor(Math.random()*5)];
+            document.getElementById('sl3').innerText = syms[Math.floor(Math.random()*5)];
+            if(++t > 15) {
+                clearInterval(iv);
+                let res = [syms[Math.floor(Math.random()*5)], syms[Math.floor(Math.random()*5)], syms[Math.floor(Math.random()*5)]];
+                // 10% шанс на джекпот
+                if(Math.random() < 0.1) res = [res[0], res[0], res[0]]; 
+                document.getElementById('sl1').innerText = res[0]; 
+                document.getElementById('sl2').innerText = res[1]; 
+                document.getElementById('sl3').innerText = res[2];
+                if(res[0] === res[1] && res[1] === res[2]) { 
+                    state.cash += 60000; 
+                    showNotif("JACKPOT! +60,000", "🎰"); 
+                }
+                updateUI();
+            }
+        }, 50);
+    }
+
+    let mActive = false, mMult = 1.0, bomb = -1;
+    function startMines() {
+        if(state.cash < 5000 || mActive) return; // FIX
+        state.cash -= 5000; mActive = true; mMult = 1.0; bomb = Math.floor(Math.random()*9);
+        document.getElementById('m-start').style.display = 'none';
+        document.getElementById('m-cash').style.display = 'block';
+        document.getElementById('m-mult').innerText = 'x1.0';
+        document.getElementById('m-grid').innerHTML = Array.from({length:9}).map((_,i) => `<div class="mine-cell" onclick="hitMine(${i})">❓</div>`).join('');
+        updateUI();
+    }
+    
+    window.hitMine = function(i) {
+        if(!mActive) return;
+        let c = document.getElementById('m-grid').children[i];
+        if(c.innerText !== '❓') return; // Защита от двойного клика
+        
+        if(i === bomb) { 
+            c.innerText = '💣'; 
+            c.style.background = 'var(--accent)';
+            mActive = false; 
+            showNotif("SYSTEM CRASH!", "💥");
+            setTimeout(() => { 
+                document.getElementById('m-start').style.display = 'block'; 
+                document.getElementById('m-cash').style.display = 'none'; 
+                document.getElementById('m-grid').innerHTML = '';
+            }, 1500); 
+        } else { 
+            c.innerText = '💎'; 
+            mMult += 0.5; 
+            document.getElementById('m-mult').innerText = 'x'+mMult.toFixed(1); 
+        }
+    }
+    
+    function cashMines() { 
+        if(!mActive) return;
+        state.cash += 5000 * mMult; 
+        mActive = false; 
+        showNotif("SAFE! +" + format(5000 * mMult), "💎"); 
+        document.getElementById('m-start').style.display = 'block'; 
+        document.getElementById('m-cash').style.display = 'none'; 
+        document.getElementById('m-grid').innerHTML = '';
+        updateUI(); 
+    }
+
+    function playRoulette(bet) {
+        if(state.cash < 5000) return; // FIX
+        state.cash -= 5000;
+        updateUI();
+        let d = document.getElementById('r-res'); d.innerText = "SPINNING...";
+        setTimeout(() => {
+            let n = Math.floor(Math.random()*37);
+            let c = n === 0 ? 'green' : (n%2 === 0 ? 'black' : 'red');
+            d.innerText = n + " (" + c.toUpperCase() + ")";
+            d.style.color = c === 'red' ? '#ff0055' : (c === 'green' ? '#00ffcc' : 'white');
+            if(bet === c) { 
+                state.cash += 10000; 
+                showNotif("WIN! +10,000", "🔴"); 
+            }
+            updateUI();
+        }, 800);
     }
 
     // --- UTILS ---
@@ -402,7 +545,9 @@
         setTimeout(() => d.remove(), 600);
     }
     function showNotif(t, i) {
-        document.getElementById('n-title').innerText = t; document.getElementById('n-icon').innerText = i;
+        document.getElementById('n-title').innerText = t; 
+        document.getElementById('n-desc').innerText = ''; 
+        document.getElementById('n-icon').innerText = i;
         const n = document.getElementById('notif'); n.classList.add('show');
         setTimeout(() => n.classList.remove('show'), 3000);
     }
