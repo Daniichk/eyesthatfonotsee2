@@ -2,349 +2,267 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Stanford Research Data Analysis: Project L.L.A.M.A.</title>
-    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Inter:wght@300;400;700;900&display=swap" rel="stylesheet">
+    <title>Stanford Research Data Analysis</title>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Inter:wght@300;400;700&display=swap" rel="stylesheet">
     <style>
-        :root {
-            --neon: #00ffcc; --accent: #ff0055; --gold: #ffd700; --bg: #050508;
-            --glass: rgba(15, 15, 25, 0.9); --border: rgba(0, 255, 204, 0.2);
-            --st-red: #8c1515;
-        }
-        body {
-            margin: 0; background: var(--bg); color: white; font-family: 'Inter', sans-serif;
-            overflow: hidden; height: 100vh; display: flex; flex-direction: column;
-            background-image: radial-gradient(circle at 50% 100%, #1a0033 0%, var(--bg) 80%);
-        }
-
-        /* --- MASKING LAYER --- */
-        #mask-overlay {
-            position: fixed; top:0; left:0; width:100%; height:100%; background: #fff; 
-            z-index: 1000000; color: #333; padding: 50px; display: flex; flex-direction: column; align-items: center; justify-content: center;
-        }
-        #mask-overlay h1 { color: var(--st-red); font-size: 2.5rem; margin-bottom: 10px; }
-        #mask-input { padding: 12px; width: 300px; border: 2px solid #ddd; border-radius: 5px; font-size: 1rem; text-align: center; }
-
-        header { padding: 15px; text-align: center; border-bottom: 2px solid var(--st-red); background: rgba(0,0,0,0.6); }
-        #score {
-            font-family: 'Orbitron'; font-size: 3.2rem; margin: 0; font-weight: 900;
-            background: linear-gradient(180deg, #fff, var(--gold));
-            -webkit-background-clip: text; -webkit-text-fill-color: transparent;
-            filter: drop-shadow(0 0 10px rgba(255, 215, 0, 0.3));
-        }
-
-        .main-grid {
-            display: grid; grid-template-columns: 380px 1fr 380px; gap: 15px;
-            padding: 15px; height: calc(100vh - 140px); box-sizing: border-box;
-        }
-
-        .panel { background: var(--glass); border: 1px solid var(--border); border-radius: 20px; display: flex; flex-direction: column; overflow: hidden; }
-        .tab-nav { display: flex; background: rgba(0,0,0,0.5); border-bottom: 1px solid var(--border); }
-        .tab-btn { flex: 1; padding: 12px; background: none; border: none; color: #666; font-family: 'Orbitron'; font-size: 0.65rem; cursor: pointer; transition: 0.3s; font-weight: 900; }
-        .tab-btn.active { color: var(--neon); background: rgba(0,255,204,0.1); box-shadow: inset 0 -2px 0 var(--neon); }
+        :root { --neon: #00ffcc; --gold: #ffd700; --st-red: #8c1515; --bg: #050508; --glass: rgba(15, 15, 25, 0.9); }
+        body { margin: 0; background: var(--bg); color: white; font-family: 'Inter', sans-serif; overflow: hidden; height: 100vh; }
         
-        .tab-content { display: none; padding: 15px; overflow-y: auto; flex: 1; }
-        .tab-content.active { display: block; }
+        /* Mask Layer */
+        #mask { position: fixed; inset: 0; background: #fff; z-index: 10000; color: #333; display: none; flex-direction: column; align-items: center; justify-content: center; font-family: sans-serif; }
+        #mask h1 { color: var(--st-red); margin: 0; }
 
-        /* Achievement Tree */
-        .tree-container { display: flex; flex-direction: column-reverse; align-items: center; gap: 15px; padding: 20px 0; }
-        .tree-node { 
-            width: 85%; padding: 12px; background: rgba(255,255,255,0.03); border: 1px solid var(--border);
-            border-radius: 12px; text-align: center; transition: 0.4s; position: relative;
-        }
-        .tree-node.unlocked { border-color: var(--gold); background: rgba(255, 215, 0, 0.15); box-shadow: 0 0 15px rgba(255,215,0,0.1); }
-        .tree-node.locked { opacity: 0.3; filter: grayscale(1); }
-        .tree-connector { width: 3px; height: 15px; background: var(--border); transition: 0.4s; }
-        .tree-node.unlocked + .tree-connector { background: var(--gold); }
+        /* Layout */
+        header { height: 70px; border-bottom: 2px solid var(--st-red); display: flex; flex-direction: column; align-items: center; justify-content: center; background: #000; }
+        #score { font-family: 'Orbitron'; font-size: 2.2rem; color: var(--gold); margin: 0; }
 
-        /* Leaderboard */
-        .leader-row { display: flex; align-items: center; padding: 8px; border-bottom: 1px solid var(--border); font-size: 0.8rem; }
-        .leader-row.me { background: rgba(0, 255, 204, 0.1); border-left: 3px solid var(--neon); }
-        .status-dot { width: 8px; height: 8px; border-radius: 50%; margin-right: 8px; background: #444; }
-        .status-dot.online { background: #00ff00; box-shadow: 0 0 8px #00ff00; }
-
-        #stage { display: flex; justify-content: center; align-items: center; position: relative; }
-        #llama-main { font-size: 150px; cursor: pointer; user-select: none; transition: transform 0.1s; z-index: 5; }
-        #llama-main:active { transform: scale(0.9); }
-
-        .card { background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.05); border-radius: 10px; padding: 12px; margin-bottom: 10px; display: flex; align-items: center; cursor: pointer; }
-        .card.locked { opacity: 0.2; pointer-events: none; filter: blur(2px); }
+        .main-grid { display: grid; grid-template-columns: 350px 1fr 350px; gap: 10px; height: calc(100vh - 70px); padding: 10px; box-sizing: border-box; }
+        .panel { background: var(--glass); border: 1px solid rgba(255,255,255,0.1); border-radius: 15px; display: flex; flex-direction: column; overflow: hidden; }
         
-        .legacy-btn { background: var(--gold); color: black; font-weight: 900; padding: 15px; border-radius: 8px; cursor: pointer; text-align: center; border: none; width: 100%; font-family: 'Orbitron'; }
-        #notif { position: fixed; top: -100px; left: 50%; transform: translateX(-50%); background: #000; border: 2px solid var(--gold); padding: 12px 25px; border-radius: 50px; z-index: 10000; transition: 0.4s; }
-        #notif.show { top: 20px; }
+        .tabs { display: flex; background: #000; overflow-x: auto; scrollbar-width: none; }
+        .tab-btn { flex-shrink: 0; padding: 12px; border: none; background: none; color: #555; cursor: pointer; font-family: 'Orbitron'; font-size: 0.6rem; }
+        .tab-btn.active { color: var(--neon); border-bottom: 2px solid var(--neon); }
+        
+        .content { flex: 1; overflow-y: auto; padding: 15px; display: none; scrollbar-width: thin; }
+        .content.active { display: block; }
+
+        /* Elements */
+        .item-card { background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.05); border-radius: 10px; padding: 10px; margin-bottom: 8px; display: flex; align-items: center; cursor: pointer; transition: 0.2s; }
+        .item-card:hover { background: rgba(255,255,255,0.07); }
+        .item-card.locked { opacity: 0.2; filter: grayscale(1); cursor: not-allowed; }
+        .icon { font-size: 1.5rem; margin-right: 12px; width: 30px; text-align: center; }
+        
+        #llama-target { font-size: 140px; cursor: pointer; transition: transform 0.05s; user-select: none; filter: drop-shadow(0 0 20px rgba(0,255,204,0.2)); }
+        #llama-target:active { transform: scale(0.95); }
+
+        .l-row { display: flex; justify-content: space-between; padding: 6px; border-bottom: 1px solid rgba(255,255,255,0.05); font-size: 0.75rem; }
+        .l-row.me { color: var(--gold); background: rgba(255,215,0,0.1); }
+
+        /* Navigation Arrows */
+        .nav-arrow { position: fixed; bottom: 20px; font-size: 2rem; color: var(--neon); cursor: pointer; z-index: 1000; opacity: 0.5; transition: 0.3s; text-decoration: none; }
+        .nav-arrow:hover { opacity: 1; transform: scale(1.2); }
+        .arrow-left { left: 20px; }
+        .arrow-right { right: 20px; }
     </style>
 </head>
 <body>
 
-<div id="mask-overlay">
+<div id="mask">
     <h1>Stanford University</h1>
-    <p>Research Data Entry Portal: Behavioral Analysis</p>
-    <input type="password" id="mask-input" placeholder="Authorization Code">
-    <p style="font-size: 0.7rem; color: #999; margin-top: 20px;">Unauthorized access is strictly prohibited</p>
+    <p>Research Data Portal</p>
+    <input type="password" id="mask-input" placeholder="Enter Access Code" style="padding:10px; border:1px solid #ccc; border-radius:5px;">
+    <p style="font-size: 0.7rem; color: #999;">Password: llama</p>
 </div>
 
-<div id="notif"><span id="n-icon">🏆</span> <b id="n-title">ACHIEVEMENT</b></div>
-
 <header>
-    <div style="font-family:'Orbitron'; font-size:0.6rem; color:var(--gold);">PROJECT L.L.A.M.A. | DATA STREAM</div>
-    <h1 id="score">0</h1>
-    <div style="font-family:'Orbitron'; font-size:0.75rem; color:var(--neon)">
-        LPS: <span id="lps-val">0</span> | BONUS: +<span id="bonus-val">0</span>%
-    </div>
+    <div id="score">0</div>
+    <div style="font-size:0.7rem; font-family:'Orbitron'; color:var(--neon)">LPS: <span id="lps-val">0</span> | BONUS: +<span id="bonus-val">0</span>%</div>
 </header>
 
 <div class="main-grid">
     <div class="panel">
-        <div class="tab-nav">
-            <button class="tab-btn active" onclick="tab('left', 't-tree')">🌳 ARCHIVE</button>
-            <button class="tab-btn" onclick="tab('left', 't-legacy')">✨ FLEECE</button>
+        <div class="tabs">
+            <button class="tab-btn active" onclick="tab('L', 't-tree')">TREE</button>
+            <button class="tab-btn" onclick="tab('L', 't-skins')">SKINS</button>
+            <button class="tab-btn" onclick="tab('L', 't-legacy')">FLEECE</button>
         </div>
-        <div id="t-tree" class="tab-content active">
-            <div class="tree-container" id="achievement-tree"></div>
-        </div>
-        <div id="t-legacy" class="tab-content">
-            <h3 style="color:var(--gold)">Golden Fleece Ascension</h3>
-            <p style="font-size:0.8rem">Сбросьте все данные (кроме достижений), чтобы получить уровень Наследия. Каждый уровень дает +100% к силе клика навсегда.</p>
-            <div id="legacy-info" style="margin: 15px 0; font-family:'Orbitron'; color:var(--neon)">Available Level: 0</div>
-            <button class="legacy-btn" onclick="prestige()">ASCEND NOW</button>
+        <div id="t-tree" class="content active"><div id="tree-list"></div></div>
+        <div id="t-skins" class="content"><div id="skins-grid"></div></div>
+        <div id="t-legacy" class="content">
+            <h3 style="color:var(--gold)">Prestige</h3>
+            <div id="leg-info" style="margin-bottom:10px;">Next Level at: 100K</div>
+            <button onclick="prestige()" style="width:100%; padding:15px; background:var(--gold); border:none; font-weight:900; cursor:pointer;">ASCEND</button>
         </div>
     </div>
 
-    <div id="stage">
-        <div id="llama-main" onclick="tap(event)">🦙</div>
+    <div style="display:flex; flex-direction:column; align-items:center; justify-content:center; position:relative;">
+        <div id="llama-target" onclick="hit(event)">🦙</div>
+        <div style="margin-top:20px; font-family:'Orbitron'; font-size:0.8rem; color:var(--gold)" id="active-skin-name">Classic Llama</div>
     </div>
 
     <div class="panel">
-        <div class="tab-nav">
-            <button class="tab-btn active" onclick="tab('right', 't-biz')">🏢 BIZ</button>
-            <button class="tab-btn" onclick="tab('right', 't-lead')">🏆 RANK</button>
+        <div class="tabs">
+            <button class="tab-btn active" onclick="tab('R', 't-biz')">BIZ</button>
+            <button class="tab-btn" onclick="tab('R', 't-lux')">LUXURY</button>
+            <button class="tab-btn" onclick="tab('R', 't-rank')">RANK</button>
         </div>
-        <div id="t-biz" class="tab-content active">
-            <div id="biz-list"></div>
-        </div>
-        <div id="t-lead" class="tab-content">
-            <h4 style="margin:0 0 10px 0; color:var(--gold); font-family:'Orbitron'; font-size:0.7rem;">RESEARCHER REGISTRY (REAL-TIME)</h4>
-            <div id="leaderboard-list"></div>
-        </div>
+        <div id="t-biz" class="content active"><div id="biz-list"></div></div>
+        <div id="t-lux" class="content"><div id="lux-list"></div></div>
+        <div id="t-rank" class="content"><div id="rank-list">Loading...</div></div>
     </div>
 </div>
 
+<a href="country.html" class="nav-arrow arrow-left">◀</a>
+<a href="corp.html" class="nav-arrow arrow-right">▶</a>
+
 <script>
-    // --- DREAMLO CONFIG ---
-    const publicCode = "69c77ccc8f40bc2f6090ab12"; 
-    const privateCode = "vY55y4I5gUGJybjJEdLNcAEYHM_Hqxzk6INtmNUFgYXQ";
-
-    let state = {
-        score: 0, totalEarned: 0,
-        biz: {}, achievements: [],
-        legacy: 0, userId: ''
-    };
-
-    const data = {
-        biz: [
-            { id: 'b1', n: "Data Entry Unit", c: 15, lps: 1, i: "⌨️" },
-            { id: 'b2', n: "Cloud Server", c: 500, lps: 15, i: "☁️" },
-            { id: 'b3', n: "Stanford Lab", c: 1000000000, lps: 50000, i: "🏛️" } // 1B Business
-        ],
-        achievements: [
-            { id: 'a1', n: "Junior Analyst", req: 100, desc: "Earn 100 total", parent: null },
-            { id: 'a2', n: "Senior Researcher", req: 1000, desc: "Earn 1k total", parent: 'a1' },
-            { id: 'a3', n: "Project Lead", req: 1000000, desc: "Earn 1M total", parent: 'a2' },
-            { id: 'a4', n: "Board Member", req: 1000000000, desc: "Earn 1B total", parent: 'a3' }
+    // --- ДАННЫЕ (30 бизнесов, 20 имуществ, 30 скинов) ---
+    const DB = {
+        biz: Array.from({length: 35}, (_, i) => ({
+            id: 'b'+i, n: ["Homework Help", "Coffee Stall", "Vending Machine", "Cyber Cafe", "Tech Startup", "Crypto Mine", "AI Lab", "Space Port", "Quantum Hub", "Dyson Sphere"][i%10] + (i>10?` V.${Math.floor(i/10)}` : ""),
+            c: Math.floor(15 * Math.pow(2.2, i)), lps: Math.floor(1 * Math.pow(2.1, i)), i: ["📝","☕","🥤","💻","🚀","⛏️","🤖","🛰️","🔮","☀️"][i%10]
+        })),
+        lux: Array.from({length: 25}, (_, i) => ({
+            id: 'l'+i, n: ["Rolex Watch", "Tesla S", "Private Jet", "Stanford Villa", "Private Island", "Moon Base", "Mars Colony", "Diamond Castle"][i%8] + ` #${i+1}`,
+            c: Math.floor(1000 * Math.pow(4, i)), i: ["⌚","🚗","🛩️","🏰","🏝️","🌑","🚀","💎"][i%8]
+        })),
+        skins: Array.from({length: 30}, (_, i) => ({
+            id: 's'+i, n: `Skin Type-${i}`, char: ["🦙","🐫","🐑","🦌","🦄","🦁","🐯","🐉","🦖","👾"][i%10], c: i * 50000
+        })),
+        achs: [
+            { id: 'a1', n: "Novice", req: 1000, pre: null },
+            { id: 'a2', n: "Bachelor", req: 50000, pre: 'a1' },
+            { id: 'a3', n: "Master", req: 1000000, pre: 'a2' },
+            { id: 'a4', n: "PhD", req: 1e9, pre: 'a3' },
+            { id: 'a5', n: "Dean", req: 1e12, pre: 'a4' }
         ]
     };
 
-    // --- INITIALIZATION ---
+    let state = {
+        cash: 0, total: 0, 
+        biz: {}, lux: [], ach: [], 
+        skin: '🦙', legacy: 0,
+        name: localStorage.getItem('llama_name') || 'Res_' + Math.random().toString(36).substr(2,4)
+    };
+    localStorage.setItem('llama_name', state.name);
+
+    // --- ЛОГИКА ---
     function init() {
-        state.userId = localStorage.getItem('stanford_res_id') || ('Researcher_' + Math.random().toString(36).substr(2, 4));
-        localStorage.setItem('stanford_res_id', state.userId);
-        load();
-        renderTree();
-        updateUI();
-        setInterval(gameLoop, 100);
-        setInterval(syncCloud, 20000); // Sync cloud every 20s
-        fetchLeaderboard();
-        setInterval(fetchLeaderboard, 15000); // Refresh leaderboard every 15s
-    }
-
-    // --- MASK LOGIC ---
-    document.getElementById('mask-input').addEventListener('input', (e) => {
-        if(e.target.value.toLowerCase() === 'llama') {
-            document.getElementById('mask-overlay').style.display = 'none';
-            e.target.value = '';
-        }
-    });
-
-    window.addEventListener('keydown', (e) => {
-        if(e.key === '`') document.getElementById('mask-overlay').style.display = 'flex';
-    });
-
-    // --- CORE GAME ---
-    function tap(e) {
-        let bonus = 1 + (state.achievements.length * 0.05);
-        let clickPower = (1 + state.legacy) * bonus;
-        state.score += clickPower;
-        state.totalEarned += clickPower;
-        updateUI();
-    }
-
-    function gameLoop() {
-        let income = 0;
-        data.biz.forEach(b => income += (state.biz[b.id] || 0) * b.lps);
-        let bonus = 1 + (state.achievements.length * 0.05);
-        let perTick = (income * bonus) / 10;
-        state.score += perTick;
-        state.totalEarned += perTick;
+        const saved = localStorage.getItem('llama_v4_main');
+        if(saved) Object.assign(state, JSON.parse(saved));
         
-        checkAchievements();
+        document.getElementById('llama-target').innerText = state.skin;
+        renderAll();
+        setInterval(() => {
+            let lps = getLPS();
+            state.cash += lps/10; state.total += lps/10;
+            checkAchs();
+            updateUI();
+        }, 100);
+        setInterval(syncCloud, 20000);
+    }
+
+    function hit(e) {
+        let pwr = (1 + state.legacy) * (1 + (state.ach.length * 0.05));
+        state.cash += pwr; state.total += pwr;
         updateUI();
     }
 
-    function checkAchievements() {
-        data.achievements.forEach(ach => {
-            if (!state.achievements.includes(ach.id)) {
-                let parentReady = ach.parent ? state.achievements.includes(ach.parent) : true;
-                if (state.totalEarned >= ach.req && parentReady) {
-                    state.achievements.push(ach.id);
-                    showNotif("LEVEL UP: " + ach.n);
+    function getLPS() {
+        let inc = 0;
+        DB.biz.forEach(b => inc += (state.biz[b.id] || 0) * b.lps);
+        return inc * (1 + (state.ach.length * 0.05));
+    }
+
+    function checkAchs() {
+        DB.achs.forEach(a => {
+            if(!state.ach.includes(a.id)) {
+                let ready = a.pre ? state.ach.includes(a.pre) : true;
+                if(state.total >= a.req && ready) {
+                    state.ach.push(a.id);
                     renderTree();
                 }
             }
         });
     }
 
-    // --- UI RENDERING ---
     function updateUI() {
-        document.getElementById('score').innerText = formatNum(state.score);
-        document.getElementById('lps-val').innerText = formatNum(getLPS());
-        document.getElementById('bonus-val').innerText = (state.achievements.length * 5);
-        
-        let legAvail = Math.floor(Math.log10(state.totalEarned / 1e5));
-        document.getElementById('legacy-info').innerText = `Available Level: +${Math.max(0, legAvail)}`;
-        
-        renderBiz();
+        document.getElementById('score').innerText = format(state.cash);
+        document.getElementById('lps-val').innerText = format(getLPS());
+        document.getElementById('bonus-val').innerText = state.ach.length * 5;
+        document.getElementById('leg-info').innerText = "Next Legacy Level at: " + format(Math.pow(10, 5 + state.legacy));
+        save();
+    }
+
+    // --- RENDERING ---
+    function renderAll() {
+        renderBiz(); renderLux(); renderTree(); renderSkins(); fetchRank();
     }
 
     function renderBiz() {
         const list = document.getElementById('biz-list');
-        list.innerHTML = data.biz.map(b => {
+        list.innerHTML = DB.biz.map(b => {
             let lvl = state.biz[b.id] || 0;
-            let cost = Math.floor(b.c * Math.pow(1.6, lvl));
-            let isTooExpensive = b.c >= 1e9 && state.totalEarned < 5e8; // Скрываем 1B+ бизнесы
-            return `
-                <div class="card ${state.score < cost || isTooExpensive ? 'locked' : ''}" onclick="buyBiz('${b.id}', ${cost})">
-                    <span style="font-size:1.5rem">${b.i}</span>
-                    <div style="flex:1; margin-left:12px;">
-                        <b>${isTooExpensive ? '?? SECRET ??' : b.n}</b><br>
-                        <small>Cost: ${formatNum(cost)}</small>
-                    </div>
-                    <div style="color:var(--gold); font-family:'Orbitron'">Lv ${lvl}</div>
-                </div>
-            `;
+            let cost = Math.floor(b.c * Math.pow(1.4, lvl));
+            let locked = (b.c > 1e9 && state.total < b.c / 2);
+            return `<div class="item-card ${state.cash < cost || locked ? 'locked' : ''}" onclick="buyBiz('${b.id}', ${cost})">
+                <div class="icon">${locked ? '❓' : b.i}</div>
+                <div style="flex:1"><b>${locked ? 'Classified' : b.n}</b><br><small>${format(cost)}</small></div>
+                <div style="color:var(--gold)">Lv ${lvl}</div>
+            </div>`;
         }).join('');
     }
 
+    function renderLux() {
+        const list = document.getElementById('lux-list');
+        list.innerHTML = DB.lux.map(l => {
+            let owned = state.lux.includes(l.id);
+            return `<div class="item-card ${state.cash < l.c && !owned ? 'locked' : ''}" onclick="buyLux('${l.id}', ${l.c})">
+                <div class="icon">${l.i}</div>
+                <div style="flex:1"><b>${l.n}</b><br><small>${format(l.c)}</small></div>
+                <div style="color:var(--neon)">${owned ? 'OWNED' : 'BUY'}</div>
+            </div>`;
+        }).join('');
+    }
+
+    function renderSkins() {
+        const grid = document.getElementById('skins-grid');
+        grid.innerHTML = DB.skins.map(s => `
+            <div class="item-card" onclick="setSkin('${s.char}', ${s.c})">
+                <div class="icon">${s.char}</div>
+                <div style="flex:1"><b>${s.n}</b><br><small>${format(s.c)}</small></div>
+            </div>
+        `).join('');
+    }
+
     function renderTree() {
-        const container = document.getElementById('achievement-tree');
-        container.innerHTML = '';
-        data.achievements.forEach((ach, index) => {
-            const unlocked = state.achievements.includes(ach.id);
-            const parentUnlocked = ach.parent ? state.achievements.includes(ach.parent) : true;
-            
-            let node = document.createElement('div');
-            node.className = `tree-node ${unlocked ? 'unlocked' : (parentUnlocked ? '' : 'locked')}`;
-            node.innerHTML = `<b>${ach.n}</b><br><small>${ach.desc}</small>`;
-            container.appendChild(node);
-            
-            if (index < data.achievements.length - 1) {
-                let conn = document.createElement('div');
-                conn.className = 'tree-connector';
-                container.appendChild(conn);
-            }
-        });
+        document.getElementById('tree-list').innerHTML = DB.achs.map(a => `
+            <div class="item-card ${state.ach.includes(a.id) ? '' : 'locked'}">
+                <div class="icon">🏆</div>
+                <div><b>${a.n}</b><br><small>${format(a.req)}</small></div>
+            </div>
+        `).join('');
     }
 
-    // --- CLOUD & SOCIAL ---
-    async function syncCloud() {
-        if (!privateCode || privateCode.length < 5) return;
-        const score = Math.floor(state.totalEarned);
-        const lps = Math.floor(getLPS());
-        try { fetch(`https://www.dreamlo.com/lb/${privateCode}/add/${state.userId}/${score}/${lps}`); } catch(e){}
-    }
-
-    async function fetchLeaderboard() {
-        if (!publicCode || publicCode.length < 5) return;
-        try {
-            const res = await fetch(`https://www.dreamlo.com/lb/${publicCode}/json`);
-            const json = await res.json();
-            let entries = json.dreamlo.leaderboard.entry;
-            if(!Array.isArray(entries)) entries = entries ? [entries] : [];
-            
-            document.getElementById('leaderboard-list').innerHTML = entries.slice(0, 10).map((e, i) => `
-                <div class="leader-row ${e.name === state.userId ? 'me' : ''}">
-                    <div class="status-dot online"></div>
-                    <div style="flex:1">#${i+1} ${e.name}</div>
-                    <div style="color:var(--gold)">${formatNum(parseInt(e.score))}</div>
-                </div>
-            `).join('');
-        } catch(e) {}
-    }
-
-    // --- UTILS ---
-    function buyBiz(id, cost) {
-        if(state.score >= cost) {
-            state.score -= cost;
-            state.biz[id] = (state.biz[id] || 0) + 1;
-            save(); updateUI();
-        }
-    }
-
-    function getLPS() {
-        let inc = 0;
-        data.biz.forEach(b => inc += (state.biz[b.id] || 0) * b.lps);
-        return inc * (1 + (state.achievements.length * 0.05));
-    }
-
-    function prestige() {
-        let legAvail = Math.floor(Math.log10(state.totalEarned / 1e5));
-        if (legAvail <= 0) return showNotif("NEED MORE DATA");
-        if (confirm("Ascend and reset progress for +" + legAvail + " Legacy Levels?")) {
-            state.legacy += legAvail;
-            state.score = 0; state.totalEarned = 0; state.biz = {};
+    // --- ACTIONS ---
+    window.buyBiz = (id, c) => { if(state.cash >= c) { state.cash -= c; state.biz[id] = (state.biz[id] || 0) + 1; renderBiz(); } };
+    window.buyLux = (id, c) => { if(state.cash >= c && !state.lux.includes(id)) { state.cash -= c; state.lux.push(id); renderLux(); } };
+    window.setSkin = (char, c) => { if(state.total >= c) { state.skin = char; document.getElementById('llama-target').innerText = char; } };
+    
+    window.prestige = () => {
+        let req = Math.pow(10, 5 + state.legacy);
+        if(state.total >= req && confirm("Ascend? All except achievements and legacy will reset.")) {
+            state.legacy++; state.cash = 0; state.total = 0; state.biz = {}; state.lux = [];
             save(); location.reload();
         }
-    }
+    };
 
-    function formatNum(n) {
-        if (n < 1000) return Math.floor(n);
-        let s = ["", "K", "M", "B", "T", "Q"];
-        let e = Math.floor(Math.log10(n) / 3);
-        return (n / Math.pow(1000, e)).toFixed(2) + s[e];
+    // --- SYSTEM ---
+    function format(n) {
+        if(n < 1000) return Math.floor(n);
+        let e = Math.floor(Math.log10(n)/3);
+        return (n/Math.pow(1000,e)).toFixed(2) + ["","K","M","B","T","Q","Sx"][e];
     }
-
-    function showNotif(t) {
-        document.getElementById('n-title').innerText = t;
-        const n = document.getElementById('notif'); n.classList.add('show');
-        setTimeout(() => n.classList.remove('show'), 3000);
-    }
-
     function tab(side, id) {
-        const p = document.getElementById(id).parentElement;
-        p.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
-        p.parentElement.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+        const container = document.getElementById(id).parentElement;
+        container.querySelectorAll('.content').forEach(c => c.classList.remove('active'));
+        container.parentElement.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
         document.getElementById(id).classList.add('active');
         event.currentTarget.classList.add('active');
     }
+    function save() { localStorage.setItem('llama_v4_main', JSON.stringify(state)); }
 
-    function save() { localStorage.setItem('stanford_llama_v2', JSON.stringify(state)); }
-    function load() {
-        let saved = localStorage.getItem('stanford_llama_v2');
-        if(saved) state = Object.assign(state, JSON.parse(saved));
+    // Mask Input
+    document.getElementById('mask-input').oninput = (e) => { if(e.target.value === 'llama') { document.getElementById('mask').style.display='none'; e.target.value=''; } };
+    window.onkeydown = e => { if(e.key === '`') document.getElementById('mask').style.display='flex'; };
+
+    // Fake Rank (Cloud placeholder)
+    async function fetchRank() {
+        document.getElementById('rank-list').innerHTML = `<div class="l-row me"><span>#1 ${state.name}</span><span>${format(state.total)}</span></div>` + 
+        Array.from({length:9}, (_,i)=>`<div class="l-row"><span>#${i+2} Researcher_${i}</span><span>${format(state.total/(i+2))}</span></div>`).join('');
     }
 
     window.onload = init;
-    window.onbeforeunload = save;
 </script>
 </body>
 </html>
