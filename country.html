@@ -213,6 +213,15 @@
 
         // Синхронизация счета при входе
         updateMain();
+        document.addEventListener('keydown', function(event) {
+            if (event.key === 'ArrowRight') {
+                // Переход на главную при нажатии "Вправо"
+                window.location.href = 'index.html';
+            } else if (event.key === 'ArrowLeft') {
+                // Переход на страницу акций при нажатии "Влево"
+                window.location.href = 'stock.html';
+            }
+        });
     </script>
 </body>
 </html>
