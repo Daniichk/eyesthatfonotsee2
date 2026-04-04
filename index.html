@@ -2,7 +2,8 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>LLAMA CYBER_CLICKER 2077</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LLAMA CYBER_PUNK ULTIMATE 2077</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Rajdhani:wght@500;700&display=swap');
 
@@ -14,304 +15,531 @@
             --yellow: #f1c40f;
             --text: #e0e6ed;
             --danger: #d90429;
+            --neon-shadow: 0 0 15px rgba(5, 217, 232, 0.4);
         }
 
         body, html {
-            margin: 0; padding: 0; height: 100vh;
+            margin: 0; padding: 0; height: 100vh; width: 100vw;
             font-family: 'Rajdhani', sans-serif;
             background-color: var(--bg);
             background-image: 
                 linear-gradient(rgba(5, 217, 232, 0.05) 1px, transparent 1px),
                 linear-gradient(90deg, rgba(5, 217, 232, 0.05) 1px, transparent 1px);
-            background-size: 40px 40px;
+            background-size: 50px 50px;
             color: var(--text);
             overflow: hidden; user-select: none;
             text-transform: uppercase;
         }
 
-        /* Главная сетка на весь экран */
-        .game-container {
+        /* Full Page Layout */
+        .game-wrapper {
             display: grid;
-            grid-template-columns: 350px 1fr 350px; /* Боковые панели фиксированы, центр тянется */
+            grid-template-columns: 350px 1fr 350px;
             height: 100vh;
             width: 100vw;
         }
 
-        /* Панели */
-        .sidebar { 
-            background: var(--panel); 
-            border-right: 2px solid var(--cyan); 
-            display: flex; flex-direction: column; 
-            padding: 20px; overflow-y: auto; 
+        /* Sidebars */
+        .sidebar {
+            background: var(--panel);
+            border-right: 2px solid var(--cyan);
+            display: flex; flex-direction: column;
+            padding: 20px; overflow-y: auto;
             backdrop-filter: blur(10px);
-            box-shadow: 10px 0 20px rgba(0,0,0,0.5);
-        }
-        .sidebar.right { 
-            border-right: none; 
-            border-left: 2px solid var(--pink); 
-            box-shadow: -10px 0 20px rgba(0,0,0,0.5);
-        }
-
-        /* Центральная часть */
-        .main-stage { 
-            display: flex; flex-direction: column; 
-            align-items: center; justify-content: center; 
-            position: relative; 
-        }
-
-        /* Элементы интерфейса */
-        .neon-text { text-shadow: 0 0 10px var(--cyan); color: var(--cyan); }
-        .neon-text-pink { text-shadow: 0 0 10px var(--pink); color: var(--pink); }
-        
-        h3 { border-bottom: 1px solid var(--cyan); padding-bottom: 10px; margin-top: 0; letter-spacing: 2px; font-size: 1.2rem; }
-        .sidebar.right h3 { border-bottom-color: var(--pink); color: var(--pink); }
-
-        .cyber-btn {
-            background: rgba(0,0,0,0.6); border: 1px solid var(--cyan); color: var(--cyan);
-            padding: 15px; margin-bottom: 12px; cursor: pointer; transition: 0.2s;
-            font-family: inherit; font-size: 14px; font-weight: bold; text-align: left;
-            width: 100%; box-sizing: border-box;
-        }
-        .cyber-btn:hover:not(:disabled) { background: rgba(5,217,232,0.2); box-shadow: 0 0 15px var(--cyan) inset; }
-        .cyber-btn:disabled { border-color: #333; color: #555; opacity: 0.5; }
-        .price { color: var(--yellow); font-size: 12px; display: block; margin-top: 4px; }
-
-        .score-box { 
-            text-align: center; margin-bottom: 40px; 
-            border: 2px solid var(--cyan); padding: 30px 60px; 
-            background: rgba(0,0,0,0.8); position: relative;
-            min-width: 300px;
-        }
-
-        #wool-count { font-size: 5rem; font-weight: bold; line-height: 1; }
-        
-        /* Исправленный кликер */
-        #llama-target { 
-            font-size: 180px; cursor: pointer; transition: 0.1s; 
-            background: none; border: none; outline: none;
-            filter: drop-shadow(0 0 25px rgba(5,217,232,0.3));
+            box-shadow: 10px 0 30px rgba(0,0,0,0.8);
             z-index: 10;
         }
-        #llama-target:active { transform: scale(0.92); filter: drop-shadow(0 0 40px var(--pink)); }
-
-        /* Кнопки действий */
-        .action-group { display: flex; gap: 20px; margin-top: 40px; }
-        .action-btn { 
-            background: #000; border: 2px solid var(--cyan); color: var(--cyan); 
-            padding: 15px 30px; font-family: inherit; font-weight: bold; 
-            cursor: pointer; transition: 0.3s; font-size: 1rem;
+        .sidebar.right {
+            border-right: none;
+            border-left: 2px solid var(--pink);
+            box-shadow: -10px 0 30px rgba(0,0,0,0.8);
         }
-        .action-btn:hover { background: var(--cyan); color: #000; box-shadow: 0 0 20px var(--cyan); }
+
+        /* Center Area */
+        .main-engine {
+            display: flex; flex-direction: column;
+            align-items: center; justify-content: center;
+            position: relative;
+        }
+
+        /* Typography */
+        .neon-text { text-shadow: 0 0 10px var(--cyan); color: var(--cyan); }
+        .neon-text-pink { text-shadow: 0 0 10px var(--pink); color: var(--pink); }
+        h3 { border-bottom: 1px solid var(--cyan); padding-bottom: 8px; margin: 20px 0 15px 0; letter-spacing: 2px; }
+        .right h3 { border-bottom-color: var(--pink); }
+
+        /* Buttons */
+        .upgrade-card {
+            background: rgba(0,0,0,0.5); border: 1px solid var(--cyan);
+            padding: 12px; margin-bottom: 10px; cursor: pointer; transition: 0.2s;
+            display: flex; flex-direction: column; width: 100%; box-sizing: border-box;
+        }
+        .upgrade-card:hover:not(.disabled) { background: rgba(5, 217, 232, 0.15); box-shadow: inset 0 0 10px var(--cyan); }
+        .upgrade-card.disabled { opacity: 0.4; cursor: not-allowed; border-color: #444; }
+        .upgrade-card .name { font-weight: bold; font-size: 14px; color: #fff; }
+        .upgrade-card .cost { color: var(--yellow); font-size: 12px; margin-top: 4px; }
+
+        /* Score & Llama */
+        .hud-display {
+            text-align: center; background: rgba(0,0,0,0.8);
+            padding: 20px 50px; border: 2px solid var(--cyan);
+            box-shadow: var(--neon-shadow); margin-bottom: 30px;
+        }
+        #wool-val { font-size: 4.5rem; font-weight: 700; line-height: 1; margin: 10px 0; }
+        
+        #llama-btn {
+            font-size: 160px; background: none; border: none; outline: none;
+            cursor: pointer; transition: transform 0.05s;
+            filter: drop-shadow(0 0 20px rgba(5,217,232,0.4));
+        }
+        #llama-btn:active { transform: scale(0.9); }
+
+        /* Systems */
+        .progress-container { width: 350px; height: 12px; border: 1px solid #333; margin-top: 20px; background: #000; }
+        #spit-bar { height: 100%; width: 0%; background: var(--danger); transition: 0.1s; box-shadow: 0 0 10px var(--danger); }
+
+        /* Modals */
+        .overlay { 
+            position: fixed; inset: 0; background: rgba(0,0,0,0.95); 
+            display: none; align-items: center; justify-content: center; 
+            z-index: 100; backdrop-filter: blur(10px);
+        }
+        .modal { 
+            background: #0b0c10; border: 2px solid var(--cyan); padding: 30px;
+            width: 450px; text-align: center; box-shadow: 0 0 40px rgba(5,217,232,0.2);
+        }
+        input { 
+            background: #000; border: 1px solid var(--cyan); color: var(--cyan); 
+            padding: 10px; width: 80%; margin: 10px 0; font-family: inherit; text-align: center;
+        }
+
+        /* Casino Games UI */
+        .mines-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 5px; margin: 15px auto; width: 210px; }
+        .mine-btn { width: 65px; height: 65px; background: #1a1a1a; border: 1px solid var(--pink); cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 24px; }
+        .mine-btn.safe { background: var(--cyan); color: #000; }
+        .mine-btn.bomb { background: var(--danger); color: #000; }
+
+        /* Floating Text */
+        .float-text { position: absolute; pointer-events: none; color: var(--cyan); font-weight: bold; font-size: 24px; animation: floatUp 0.7s forwards; z-index: 200; }
+        @keyframes floatUp { from { opacity: 1; transform: translateY(0); } to { opacity: 0; transform: translateY(-100px); } }
+
+        .action-btn {
+            background: #000; border: 2px solid var(--cyan); color: var(--cyan);
+            padding: 12px 24px; font-family: inherit; font-weight: bold; cursor: pointer;
+            margin: 5px; transition: 0.2s;
+        }
+        .action-btn:hover { background: var(--cyan); color: #000; }
         .action-btn.pink { border-color: var(--pink); color: var(--pink); }
-        .action-btn.pink:hover { background: var(--pink); color: #000; box-shadow: 0 0 20px var(--pink); }
-
-        /* Прогресс-бар */
-        .spit-box { width: 400px; border: 1px solid #222; height: 10px; margin-top: 30px; background: #000; }
-        #spit-bar { height: 100%; background: var(--danger); width: 0%; box-shadow: 0 0 15px var(--danger); }
-
-        /* Модалки (Казино/Банк) */
-        .overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.9); z-index: 100; display: none; align-items: center; justify-content: center; backdrop-filter: blur(15px); }
-        .modal { background: #0b0c10; padding: 40px; border: 2px solid var(--cyan); width: 450px; text-align: center; }
-
-        /* Частицы клика */
-        .particle { position: absolute; pointer-events: none; animation: floatUp 0.6s ease-out forwards; font-size: 30px; z-index: 100; font-weight: bold; color: var(--cyan); }
-        @keyframes floatUp { 0% { opacity: 1; transform: translateY(0); } 100% { opacity: 0; transform: translateY(-150px); } }
-
-        .badge { background: var(--pink); color: #000; padding: 5px 15px; font-weight: bold; margin-top: 10px; display: inline-block; }
+        .action-btn.pink:hover { background: var(--pink); color: #000; }
     </style>
 </head>
 <body>
 
-    <div class="game-container">
-        <!-- Левая панель -->
-        <div class="sidebar">
-            <h3 class="neon-text">UPGRADES // HACKS</h3>
-            <div id="click-upgrades"></div>
-            <br>
-            <h3 class="neon-text">AUTOMATION // BOTS</h3>
-            <div id="auto-upgrades"></div>
-        </div>
+<div class="game-wrapper">
+    <!-- Left: Upgrades -->
+    <div class="sidebar">
+        <h3 class="neon-text">HARDWARE_MODS (CLICK)</h3>
+        <div id="list-click"></div>
+        <h3 class="neon-text">AUTO_DAEMONS (BOTS)</h3>
+        <div id="list-auto"></div>
+    </div>
 
-        <!-- Центр -->
-        <div class="main-stage">
-            <div class="score-box">
-                <div style="letter-spacing: 4px; opacity: 0.6; font-size: 14px;">NEURON_WOOL COLLECTED</div>
-                <div id="wool-count" class="neon-text">0</div>
-                <div class="badge" id="rank-name">STREET KID</div>
-                <div style="margin-top: 10px; font-weight: bold; color: var(--yellow);">
-                    CPS: <span id="cp-val">1</span> | APS: <span id="ps-val">0</span>
-                </div>
-            </div>
-
-            <button id="llama-target">🦙</button>
-
-            <div class="spit-box"><div id="spit-bar"></div></div>
-            <div style="color: var(--danger); font-size: 12px; margin-top: 8px; letter-spacing: 2px;">OVERHEAT_SYNC_STATUS</div>
-
-            <div class="action-group">
-                <button class="action-btn pink" onclick="UI.open('casino-hub')">ENTER CASINO</button>
-                <button class="action-btn" style="border-color: var(--yellow); color: var(--yellow);" onclick="UI.open('bank-hub')">CORPO BANK</button>
+    <!-- Center: Main -->
+    <div class="main-engine">
+        <div class="hud-display">
+            <div style="font-size: 12px; opacity: 0.7; letter-spacing: 3px;">WOOL_RESERVES.DB</div>
+            <div id="wool-val" class="neon-text">0</div>
+            <div id="rank-tag" style="background: var(--pink); color: #000; padding: 2px 10px; font-weight: bold; display: inline-block;">STREET_KID</div>
+            <div style="margin-top: 10px; font-size: 14px;">
+                NET_INPUT: <span id="stat-ps" style="color:var(--pink)">0</span>/S | CLICK_FORCE: <span id="stat-cp" style="color:var(--cyan)">1</span>
             </div>
         </div>
 
-        <!-- Правая панель -->
-        <div class="sidebar right">
-            <h3 class="neon-text-pink">CYBERWARE // MULTI</h3>
-            <div id="special-upgrades"></div>
-            <br>
-            <h3 class="neon-text-pink">SYSTEM OVERRIDE</h3>
-            <div id="prestige-upgrades"></div>
-            
-            <button class="action-btn" style="margin-top: auto; border-color: var(--danger); color: var(--danger);" onclick="Llama.wipe()">WIPE ALL DATA</button>
+        <button id="llama-btn">🦙</button>
+
+        <div class="progress-container"><div id="spit-bar"></div></div>
+        <div style="color: var(--danger); font-size: 10px; margin-top: 5px; letter-spacing: 2px;">NEURAL_OVERLOAD_PREVENTION</div>
+
+        <div style="margin-top: 40px; display: flex; gap: 15px;">
+            <button class="action-btn pink" onclick="GameUI.show('modal-casino')">DIRTY_CASINO</button>
+            <button class="action-btn" style="border-color: var(--yellow); color: var(--yellow);" onclick="GameUI.show('modal-bank')">CORPO_BANK</button>
         </div>
     </div>
 
-    <!-- Модалки (функционал сохранен) -->
-    <div id="casino-hub" class="overlay">
-        <div class="modal" style="border-color: var(--pink);">
-            <h2 class="neon-text-pink">CASINO MAINFRAME</h2>
-            <button class="action-btn pink" style="width:100%; margin-bottom: 10px;" onclick="alert('Slots coming back...')">SLOTS</button>
-            <button class="action-btn" style="width:100%;" onclick="UI.close()">LEAVE</button>
-        </div>
-    </div>
-
-    <div id="bank-hub" class="overlay">
-        <div class="modal" style="border-color: var(--yellow);">
-            <h2 style="color: var(--yellow);">BANK ACCESS</h2>
-            <p>Authorization required...</p>
-            <button class="action-btn" style="width:100%; border-color: var(--danger);" onclick="UI.close()">CANCEL</button>
-        </div>
-    </div>
-
-    <script>
-    const UI = {
-        open: id => document.getElementById(id).style.display = 'flex',
-        close: () => document.querySelectorAll('.overlay').forEach(el => el.style.display = 'none')
-    };
-
-    const Llama = {
-        data: {
-            wool: 0, clickPwr: 1, autoPwr: 0, multi: 1, prestige: 1,
-            rank: "STREET KID", inv: {}
-        },
-        temp: { spit: 0, clicks: 0 },
+    <!-- Right: Specials & Prestige -->
+    <div class="sidebar right">
+        <h3 class="neon-text-pink">BIOWARE_INJECTS (MULT)</h3>
+        <div id="list-spec"></div>
+        <h3 class="neon-text-pink">SYSTEM_OVERRIDE</h3>
+        <div id="list-prestige"></div>
         
-        db: {
-            click: [
-                { id: "c1", n: "HOLO-COMB", p: 20, v: 1 },
-                { id: "c2", n: "NEON SCISSORS", p: 250, v: 10 },
-                { id: "c3", n: "PLASMA SHEARING", p: 5000, v: 150 }
-            ],
-            auto: [
-                { id: "a1", n: "SCRAP DRONE", p: 50, v: 1 },
-                { id: "a2", n: "CYBER-SHEPHERD", p: 1000, v: 25 },
-                { id: "a3", n: "AI FARM-MATRIX", p: 15000, v: 200 }
-            ],
-            special: [
-                { id: "s1", n: "SYNTH-CACTUS", p: 1000, v: 0.2 },
-                { id: "s2", n: "NEURAL LINK", p: 10000, v: 0.5 }
-            ],
-            prestige: [
-                { id: "p1", n: "EDGE-RUNNER", p: 1000000, v: 10 }
-            ]
-        },
+        <button class="action-btn" style="margin-top: auto; border-color: var(--danger); color: var(--danger);" onclick="Core.wipe()">NUCLEAR_RESET</button>
+    </div>
+</div>
 
-        init() {
-            this.load();
-            this.render();
-            
-            // Фикс клика: привязываем к кнопке
-            document.getElementById('llama-target').onclick = (e) => this.doClick(e);
-            
-            setInterval(() => this.tick(), 1000);
-            this.update();
-        },
+<!-- MODALS -->
+<div id="modal-casino" class="overlay">
+    <div class="modal" style="border-color: var(--pink);">
+        <h2 class="neon-text-pink">NIGHT_CITY_CASINO</h2>
+        <div id="casino-main">
+            <button class="action-btn pink" style="width: 100%" onclick="Casino.openGame('slots')">🎰 NEON SLOTS</button>
+            <button class="action-btn pink" style="width: 100%" onclick="Casino.openGame('crash')">📈 MARKET CRASH</button>
+            <button class="action-btn pink" style="width: 100%" onclick="Casino.openGame('mines')">💣 DATA MINES</button>
+            <button class="action-btn" style="width: 100%; margin-top: 20px;" onclick="GameUI.hide()">EXIT</button>
+        </div>
 
-        doClick(e) {
-            this.temp.clicks++;
-            const gain = this.data.clickPwr * this.data.multi * this.data.prestige;
-            this.data.wool += gain;
-            
-            // Эффект цифр на месте клика
-            const p = document.createElement('div');
-            p.className = 'particle';
-            p.innerText = '+' + Math.floor(gain);
-            p.style.left = (e.clientX || window.innerWidth/2) + 'px';
-            p.style.top = (e.clientY || window.innerHeight/2) + 'px';
-            document.body.appendChild(p);
-            setTimeout(() => p.remove(), 600);
-            
-            this.update();
-        },
+        <!-- SLOTS -->
+        <div id="game-slots" style="display:none;">
+            <div id="slot-res" style="font-size: 40px; margin: 20px 0; background: #000; padding: 10px; letter-spacing: 10px;">[ ? ? ? ]</div>
+            <input type="number" id="slot-bet" placeholder="BET AMOUNT">
+            <button class="action-btn pink" onclick="Casino.playSlots()">SPIN</button>
+            <button class="action-btn" onclick="Casino.back()">BACK</button>
+        </div>
 
-        tick() {
-            this.data.wool += this.data.autoPwr * this.data.multi * this.data.prestige;
-            
-            // Логика перегрева
-            if (this.temp.clicks > 8) this.temp.spit = Math.min(100, this.temp.spit + 20);
-            else this.temp.spit = Math.max(0, this.temp.spit - 10);
-            
-            if (this.temp.spit >= 100) {
-                this.data.wool *= 0.95;
-                this.temp.spit = 0;
+        <!-- CRASH -->
+        <div id="game-crash" style="display:none;">
+            <div id="crash-mult" style="font-size: 50px; color: var(--cyan); margin: 20px 0;">1.00x</div>
+            <input type="number" id="crash-bet" placeholder="BET AMOUNT">
+            <button class="action-btn pink" id="crash-btn" onclick="Casino.startCrash()">INJECT</button>
+            <button class="action-btn" onclick="Casino.back()">BACK</button>
+        </div>
+
+        <!-- MINES -->
+        <div id="game-mines" style="display:none;">
+            <div id="mines-info" style="margin-bottom: 10px;">Mult: 1.00x</div>
+            <div class="mines-grid" id="mines-board"></div>
+            <input type="number" id="mines-bet" placeholder="BET">
+            <button class="action-btn pink" id="mines-start-btn" onclick="Casino.startMines()">HACK</button>
+            <button class="action-btn yellow" id="mines-cash-btn" style="display:none" onclick="Casino.cashMines()">CASHOUT</button>
+            <button class="action-btn" onclick="Casino.back()">BACK</button>
+        </div>
+    </div>
+</div>
+
+<div id="modal-bank" class="overlay">
+    <div class="modal" style="border-color: var(--yellow);">
+        <h2 style="color: var(--yellow);">CORPO_INVESTMENTS</h2>
+        <div id="bank-ui">
+            <input type="number" id="bank-deposit" placeholder="AMOUNT TO LOCK">
+            <button class="action-btn" style="border-color: var(--yellow); color: var(--yellow); width: 100%" onclick="Bank.lock(1)">1 MIN (+10%)</button>
+            <button class="action-btn" style="border-color: var(--yellow); color: var(--yellow); width: 100%" onclick="Bank.lock(60)">1 HOUR (+100%)</button>
+        </div>
+        <div id="bank-timer" style="display:none; padding: 20px;">
+            <h3 id="b-time">00:00</h3>
+            <button class="action-btn yellow" id="b-claim" disabled onclick="Bank.claim()">CLAIM</button>
+        </div>
+        <button class="action-btn" style="width: 100%; margin-top: 15px;" onclick="GameUI.hide()">EXIT</button>
+    </div>
+</div>
+
+<script>
+/* --- CORE SYSTEM --- */
+const Core = {
+    save: {
+        wool: 0, clickPwr: 1, autoPwr: 0, multi: 1, prestige: 1,
+        rank: "STREET_KID", inv: {}, bank: { active: false, end: 0, val: 0 }
+    },
+    temp: { clicks: 0, spit: 0 },
+    
+    db: {
+        click: [
+            { id: "c1", n: "CYBER_PLIERS", p: 15, v: 1 },
+            { id: "c2", n: "LASER_SHEARS", p: 200, v: 8 },
+            { id: "c3", n: "GRAVITY_COMB", p: 3500, v: 50 },
+            { id: "c4", n: "MOLECULAR_EXTRACTOR", p: 50000, v: 400 }
+        ],
+        auto: [
+            { id: "a1", n: "SCRAP_BOT", p: 60, v: 2 },
+            { id: "a2", n: "SHEPHERD_AI", p: 800, v: 15 },
+            { id: "a3", n: "NEURAL_FARM", p: 12000, v: 120 },
+            { id: "a4", n: "SATELLITE_LINK", p: 250000, v: 900 }
+        ],
+        spec: [
+            { id: "s1", n: "SYNTH_CACTUS", p: 5000, v: 0.1 },
+            { id: "s2", n: "ADRENALINE_CHIP", p: 25000, v: 0.5 }
+        ],
+        prestige: [
+            { id: "p1", n: "EDGE_RUNNER", p: 1000000, v: 5 },
+            { id: "p2", n: "NET_GOD", p: 50000000, v: 50 }
+        ]
+    },
+
+    init() {
+        const local = localStorage.getItem('cyber_llama_v3');
+        if(local) this.save = JSON.parse(local);
+        
+        document.getElementById('llama-btn').onclick = (e) => this.click(e);
+        setInterval(() => this.tick(), 1000);
+        this.render();
+        this.update();
+        
+        // Keybind
+        window.addEventListener('keydown', (e) => {
+            if(e.code === 'Space' && document.activeElement.tagName !== 'INPUT') {
+                e.preventDefault();
+                this.click({clientX: window.innerWidth/2, clientY: window.innerHeight/2});
             }
-            
-            this.temp.clicks = 0;
-            this.update();
-            this.save();
-        },
+        });
+    },
 
-        update() {
-            document.getElementById('wool-count').innerText = Math.floor(this.data.wool).toLocaleString();
-            document.getElementById('spit-bar').style.width = this.temp.spit + "%";
-            document.getElementById('cp-val').innerText = Math.floor(this.data.clickPwr * this.data.multi);
-            document.getElementById('ps-val').innerText = Math.floor(this.data.autoPwr * this.data.multi);
-            document.getElementById('rank-name').innerText = this.data.rank;
-            
-            document.querySelectorAll('.cyber-btn').forEach(btn => {
-                btn.disabled = this.data.wool < btn.dataset.cost;
+    click(e) {
+        this.temp.clicks++;
+        const gain = this.save.clickPwr * this.save.multi * this.save.prestige;
+        this.save.wool += gain;
+        this.pop(e.clientX, e.clientY, '+' + Math.floor(gain));
+        this.update();
+    },
+
+    tick() {
+        // Auto logic
+        this.save.wool += this.save.autoPwr * this.save.multi * this.save.prestige;
+        
+        // Overheat logic
+        if(this.temp.clicks > 8) this.temp.spit = Math.min(100, this.temp.spit + 25);
+        else this.temp.spit = Math.max(0, this.temp.spit - 10);
+        
+        if(this.temp.spit >= 100) {
+            this.save.wool *= 0.9;
+            this.temp.spit = 0;
+            this.pop(window.innerWidth/2, window.innerHeight/2, 'OVERHEAT!', '#ff2a6d');
+        }
+        
+        this.temp.clicks = 0;
+        this.bankTick();
+        this.update();
+        this.saveData();
+    },
+
+    bankTick() {
+        if(!this.save.bank.active) return;
+        const now = Date.now();
+        const diff = this.save.bank.end - now;
+        if(diff <= 0) {
+            document.getElementById('b-time').innerText = "READY";
+            document.getElementById('b-claim').disabled = false;
+        } else {
+            let m = Math.floor(diff/60000), s = Math.floor((diff%60000)/1000);
+            document.getElementById('b-time').innerText = `${m}:${s < 10 ? '0' : ''}${s}`;
+        }
+    },
+
+    update() {
+        document.getElementById('wool-val').innerText = Math.floor(this.save.wool).toLocaleString();
+        document.getElementById('stat-cp').innerText = Math.floor(this.save.clickPwr * this.save.multi * this.save.prestige);
+        document.getElementById('stat-ps').innerText = Math.floor(this.save.autoPwr * this.save.multi * this.save.prestige);
+        document.getElementById('spit-bar').style.width = this.temp.spit + "%";
+        document.getElementById('rank-tag').innerText = this.save.rank;
+
+        document.querySelectorAll('.upgrade-card').forEach(card => {
+            const cost = parseInt(card.dataset.cost);
+            card.classList.toggle('disabled', this.save.wool < cost);
+        });
+    },
+
+    render() {
+        const build = (cat, box) => {
+            const el = document.getElementById(box);
+            el.innerHTML = '';
+            this.db[cat].forEach(item => {
+                const count = this.save.inv[item.id] || 0;
+                const cost = Math.floor(item.p * Math.pow(1.6, count));
+                const div = document.createElement('div');
+                div.className = 'upgrade-card';
+                div.dataset.cost = cost;
+                div.innerHTML = `<span class="name">${item.n} [${count}]</span><span class="cost">DATA: ${cost.toLocaleString()} W</span>`;
+                div.onclick = () => this.buy(cat, item.id);
+                el.appendChild(div);
             });
-        },
+        };
+        build('click', 'list-click');
+        build('auto', 'list-auto');
+        build('spec', 'list-spec');
+        build('prestige', 'list-prestige');
+    },
 
-        render() {
-            const createList = (cat, containerId) => {
-                const cont = document.getElementById(containerId);
-                cont.innerHTML = '';
-                this.db[cat].forEach(item => {
-                    const count = this.data.inv[item.id] || 0;
-                    const cost = Math.floor(item.p * Math.pow(1.5, count));
-                    const btn = document.createElement('button');
-                    btn.className = 'cyber-btn';
-                    btn.dataset.cost = cost;
-                    btn.innerHTML = `${item.n} [${count}] <span class="price">${cost} W</span>`;
-                    btn.onclick = () => {
-                        if (this.data.wool >= cost) {
-                            this.data.wool -= cost;
-                            this.data.inv[item.id] = count + 1;
-                            if(cat === 'click') this.data.clickPwr += item.v;
-                            if(cat === 'auto') this.data.autoPwr += item.v;
-                            if(cat === 'special') this.data.multi += item.v;
-                            this.render(); this.update();
-                        }
-                    };
-                    cont.appendChild(btn);
-                });
-            };
-            createList('click', 'click-upgrades');
-            createList('auto', 'auto-upgrades');
-            createList('special', 'special-upgrades');
-            createList('prestige', 'prestige-upgrades');
-        },
+    buy(cat, id) {
+        const item = this.db[cat].find(x => x.id === id);
+        const count = this.save.inv[id] || 0;
+        const cost = Math.floor(item.p * Math.pow(1.6, count));
 
-        save() { localStorage.setItem('cyber_llama_save', JSON.stringify(this.data)); },
-        load() { 
-            const saved = localStorage.getItem('cyber_llama_save');
-            if(saved) this.data = JSON.parse(saved);
-        },
-        wipe() { if(confirm("DELETE ALL?")) { localStorage.clear(); location.reload(); } }
-    };
+        if(this.save.wool >= cost) {
+            if(cat === 'prestige') {
+                if(!confirm("FULL SYSTEM WIPE? (Keep Prestige Multipliers)")) return;
+                this.save.prestige *= item.v;
+                this.save.rank = item.n;
+                this.save.wool = 0; this.save.clickPwr = 1; this.save.autoPwr = 0; this.save.inv = {};
+            } else {
+                this.save.wool -= cost;
+                this.save.inv[id] = count + 1;
+                if(cat === 'click') this.save.clickPwr += item.v;
+                if(cat === 'auto') this.save.autoPwr += item.v;
+                if(cat === 'spec') this.save.multi += item.v;
+            }
+            this.render(); this.update(); this.saveData();
+        }
+    },
 
-    window.onload = () => Llama.init();
-    </script>
+    pop(x, y, txt, color) {
+        const p = document.createElement('div');
+        p.className = 'float-text';
+        p.innerText = txt;
+        if(color) p.style.color = color;
+        p.style.left = x + 'px'; p.style.top = y + 'px';
+        document.body.appendChild(p);
+        setTimeout(() => p.remove(), 700);
+    },
+
+    saveData() { localStorage.setItem('cyber_llama_v3', JSON.stringify(this.save)); },
+    wipe() { if(confirm("FORMAT DRIVE?")) { localStorage.clear(); location.reload(); } }
+};
+
+/* --- UI CONTROLLER --- */
+const GameUI = {
+    show: id => document.getElementById(id).style.display = 'flex',
+    hide: () => document.querySelectorAll('.overlay').forEach(e => e.style.display = 'none')
+};
+
+/* --- BANK SYSTEM --- */
+const Bank = {
+    lock(mins) {
+        const val = parseInt(document.getElementById('bank-deposit').value);
+        if(isNaN(val) || val <= 0 || val > Core.save.wool) return;
+        Core.save.wool -= val;
+        Core.save.bank = {
+            active: true,
+            end: Date.now() + (mins * 60000),
+            val: Math.floor(val * (mins === 1 ? 1.1 : 2))
+        };
+        document.getElementById('bank-ui').style.display = 'none';
+        document.getElementById('bank-timer').style.display = 'block';
+        Core.update();
+    },
+    claim() {
+        if(Date.now() < Core.save.bank.end) return;
+        Core.save.wool += Core.save.bank.val;
+        Core.save.bank.active = false;
+        document.getElementById('bank-ui').style.display = 'block';
+        document.getElementById('bank-timer').style.display = 'none';
+        document.getElementById('b-claim').disabled = true;
+        Core.update();
+    }
+};
+
+/* --- CASINO SYSTEM --- */
+const Casino = {
+    active: '',
+    openGame(g) {
+        document.getElementById('casino-main').style.display = 'none';
+        document.getElementById('game-'+g).style.display = 'block';
+        this.active = g;
+        if(g === 'mines') this.resetMines();
+    },
+    back() {
+        document.querySelectorAll('#modal-casino div[id^="game-"]').forEach(e => e.style.display = 'none');
+        document.getElementById('casino-main').style.display = 'block';
+    },
+
+    playSlots() {
+        const bet = parseInt(document.getElementById('slot-bet').value);
+        if(isNaN(bet) || bet <= 0 || bet > Core.save.wool) return;
+        Core.save.wool -= bet;
+        const syms = ['💎','💀','⚡','🔥'];
+        const r = [syms[Math.floor(Math.random()*4)], syms[Math.floor(Math.random()*4)], syms[Math.floor(Math.random()*4)]];
+        document.getElementById('slot-res').innerText = `[ ${r[0]} ${r[1]} ${r[2]} ]`;
+        if(r[0]===r[1] && r[1]===r[2]) Core.save.wool += bet * 10;
+        else if(r[0]===r[1] || r[1]===r[2]) Core.save.wool += bet * 2;
+        Core.update();
+    },
+
+    // Crash Logic
+    crashVal: 1, crashInt: null,
+    startCrash() {
+        const bet = parseInt(document.getElementById('crash-bet').value);
+        if(isNaN(bet) || bet <= 0 || bet > Core.save.wool) return;
+        Core.save.wool -= bet;
+        const btn = document.getElementById('crash-btn');
+        btn.innerText = 'CASH OUT';
+        btn.onclick = () => this.cashCrash(bet);
+        this.crashVal = 1;
+        const limit = Math.random() * 5 + 1;
+        this.crashInt = setInterval(() => {
+            this.crashVal += 0.02;
+            document.getElementById('crash-mult').innerText = this.crashVal.toFixed(2) + 'x';
+            if(this.crashVal >= limit) {
+                clearInterval(this.crashInt);
+                document.getElementById('crash-mult').innerText = 'CRASHED!';
+                this.endCrash();
+            }
+        }, 100);
+    },
+    cashCrash(bet) {
+        clearInterval(this.crashInt);
+        Core.save.wool += Math.floor(bet * this.crashVal);
+        this.endCrash();
+    },
+    endCrash() {
+        const btn = document.getElementById('crash-btn');
+        btn.innerText = 'INJECT';
+        btn.onclick = () => this.startCrash();
+        Core.update();
+    },
+
+    // Mines Logic
+    mineBet: 0, mineMult: 1, mineBombs: [], mineOpen: 0,
+    resetMines() {
+        const board = document.getElementById('mines-board');
+        board.innerHTML = '';
+        for(let i=0; i<9; i++) {
+            const b = document.createElement('button');
+            b.className = 'mine-btn';
+            b.innerText = '?';
+            b.onclick = () => this.clickMine(i, b);
+            board.appendChild(b);
+        }
+    },
+    startMines() {
+        this.mineBet = parseInt(document.getElementById('mines-bet').value);
+        if(isNaN(this.mineBet) || this.mineBet <= 0 || this.mineBet > Core.save.wool) return;
+        Core.save.wool -= this.mineBet;
+        this.mineBombs = [];
+        while(this.mineBombs.length < 3) {
+            let r = Math.floor(Math.random()*9);
+            if(!this.mineBombs.includes(r)) this.mineBombs.push(r);
+        }
+        this.mineMult = 1; this.mineOpen = 0;
+        document.getElementById('mines-start-btn').style.display = 'none';
+        document.getElementById('mines-cash-btn').style.display = 'inline-block';
+        this.resetMines();
+        Core.update();
+    },
+    clickMine(i, btn) {
+        if(this.mineBombs.includes(i)) {
+            btn.innerText = '💀'; btn.className = 'mine-btn bomb';
+            this.endMines(false);
+        } else {
+            btn.innerText = '💎'; btn.className = 'mine-btn safe';
+            btn.onclick = null;
+            this.mineOpen++;
+            this.mineMult += 0.5;
+            document.getElementById('mines-info').innerText = `Mult: ${this.mineMult.toFixed(2)}x`;
+            if(this.mineOpen === 6) this.cashMines();
+        }
+    },
+    cashMines() {
+        Core.save.wool += Math.floor(this.mineBet * this.mineMult);
+        this.endMines(true);
+    },
+    endMines(win) {
+        document.getElementById('mines-start-btn').style.display = 'inline-block';
+        document.getElementById('mines-cash-btn').style.display = 'none';
+        this.mineBombs.forEach(idx => {
+            document.getElementById('mines-board').children[idx].innerText = '💀';
+        });
+        Core.update();
+    }
+};
+
+window.onload = () => Core.init();
+</script>
 </body>
 </html>
